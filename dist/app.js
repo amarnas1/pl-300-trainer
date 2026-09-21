@@ -28,16 +28,20 @@
     return `<div class="choices">${question.options.map((option, optionIndex) => `<label class="choice"><input type="${count === 1 ? 'radio' : 'checkbox'}" name="q${index}" value="${optionIndex}"><span><strong>${String.fromCharCode(65 + optionIndex)}.</strong> ${escape(option)}</span></label>`).join('')}</div>`;
   };
   const select = (name, choices) => `<select name="${name}" aria-label="${name}"><option value="">Choose…</option>${choices.map(value => `<option value="${escape(value)}">${escape(value)}</option>`).join('')}</select>`;
+  const caseMarkup = question => question.caseStudy ? `<aside class="case-context"><p class="case-label">${escape(question.caseStudy.title)}</p><p>${escape(question.caseStudy.intro)}</p></aside>` : '';
   const structuredMarkup = (question, index) => {
     if (question.type === 'Order ALL four steps') {
       return `<div class="sequence">${[1, 2, 3, 4].map(n => `<label>Position ${n}${select(`q${index}-${n}`, question.options)}</label>`).join('')}</div>`;
     }
     const pairs = question.answer.split(';').map(v => v.trim().split(' = '));
     const choices = question.type === 'Answer YES or NO for EACH statement' ? ['Yes', 'No'] : [...new Set(pairs.map(pair => pair[1]))];
-    return `<div class="sequence">${pairs.map(([number]) => `<label>Statement ${number}${select(`q${index}-${number}`, choices)}</label>`).join('')}</div>`;
+    return `<div class="sequence">${pairs.map(([number]) => {
+      const statement = question.options.find(option => option.startsWith(`${number}.`)) || `Statement ${number}`;
+      return `<label><span class="statement-label">${escape(statement)}</span>${select(`q${index}-${number}`, choices)}</label>`;
+    }).join('')}</div>`;
   };
   const render = () => {
-    quiz.innerHTML = set.map((question, index) => `<article class="question" id="q-${index}"><p class="q-meta">Question ${String(index + 1).padStart(2, '0')} · ${escape(question.topic)} · ${escape(question.type)}</p><p class="prompt">${escape(question.prompt)}</p>${question.type.startsWith('Choose') ? choiceMarkup(question, index) : structuredMarkup(question, index)}<div class="feedback"><p class="result"></p><details><summary>Read the explanation</summary><p class="why"><strong>The basic idea:</strong> ${escape(question.why)}</p><p class="why"><strong>Why the alternatives fail:</strong> ${escape(question.wrong)}</p><p class="why"><strong>Remember:</strong> ${escape(question.remember)}</p></details></div></article>`).join('');
+    quiz.innerHTML = set.map((question, index) => `<article class="question" id="q-${index}"><p class="q-meta">Question ${String(index + 1).padStart(2, '0')} · ${escape(question.topic)} · ${escape(question.type)}</p>${caseMarkup(question)}<p class="prompt">${escape(question.prompt)}</p>${question.type.startsWith('Choose') ? choiceMarkup(question, index) : structuredMarkup(question, index)}<div class="feedback"><p class="result"></p><details><summary>Read the explanation</summary><p class="why"><strong>The basic idea:</strong> ${escape(question.why)}</p><p class="why"><strong>Why the alternatives fail:</strong> ${escape(question.wrong)}</p><p class="why"><strong>Remember:</strong> ${escape(question.remember)}</p></details></div></article>`).join('');
     quiz.querySelectorAll('input, select').forEach(control => control.addEventListener('change', updateProgress));
     updateProgress();
   };

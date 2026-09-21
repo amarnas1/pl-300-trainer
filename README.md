@@ -1,6 +1,6 @@
 # PL-300 Trainer
 
-An interactive practice site for the **Prepare the data** section of Microsoft PL-300. Each attempt draws 15 random questions from a 36-question library, scores the result after submission, and explains every answer.
+An interactive practice site for the **Prepare the data** section of Microsoft PL-300. Each attempt draws 15 random questions from a 45-question library, scores the result after submission, and explains every answer. Case-study questions show their scenario before the question.
 
 ## Deploy on Vercel
 
@@ -8,7 +8,7 @@ This repository is a plain static website. The ready-to-serve files are in `dist
 
 - `index.html` — page structure and styling
 - `app.js` — quiz logic
-- `questions.js` — 36-question practice library
+- `questions.js` — 45-question practice library
 
 The included `vercel.json` sets `dist` as Vercel's output directory. When importing the GitHub repository in Vercel, use these settings:
 
