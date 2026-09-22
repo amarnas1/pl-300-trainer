@@ -61,6 +61,22 @@
     }
     return copy;
   };
+  const randomizeChoices = question => {
+    if (!question.type.startsWith('Choose')) return { ...question };
+    const correctLetters = new Set(question.answer.split(' and ').map(value => value.trim()));
+    const choices = shuffle(question.options.map((text, index) => ({
+      text,
+      correct: correctLetters.has(String.fromCharCode(65 + index))
+    })));
+    return {
+      ...question,
+      options: choices.map(choice => choice.text),
+      answer: choices
+        .map((choice, index) => choice.correct ? String.fromCharCode(65 + index) : null)
+        .filter(Boolean)
+        .join(' and ')
+    };
+  };
   const escape = value => String(value).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
   const current = () => tracks[activeTrack];
   const questionBank = () => current().questions();
@@ -136,7 +152,7 @@
     const all = questionBank();
     if (activeTrack !== 'full' && all.length < setSize()) return;
     practiceMode = activeTrack === 'full' ? 'weighted' : mode;
-    set = activeTrack === 'full' ? fullSet() : practiceMode === 'all' ? shuffle(all) : shuffle(all).slice(0, setSize());
+    set = (activeTrack === 'full' ? fullSet() : practiceMode === 'all' ? shuffle(all) : shuffle(all).slice(0, setSize())).map(randomizeChoices);
     graded = false;
     summary.style.display = 'none';
     quiz.classList.remove('hidden');

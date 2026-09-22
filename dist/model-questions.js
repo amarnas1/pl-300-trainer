@@ -1,43 +1,639 @@
-(() => {
-  const q = (id, topic, type, prompt, options, answer, why, wrong, remember, caseStudy) => ({ id, topic, type, prompt, options, answer, why, wrong, remember, source: 'model', ...(caseStudy ? { caseStudy } : {}) });
-  const northwind = { title: 'Case study: Northwind Traders', intro: 'Northwind has FactSales with OrderDateKey, ShipDateKey, CustomerKey, ProductKey, SalesAmount, and Quantity. DimDate has one row per calendar date and a unique DateKey. DimCustomer and DimProduct each have unique keys. Sales reports normally analyze Order Date, but logistics needs Ship Date analysis. The model must remain easy to understand and responsive.' };
-  const budget = { title: 'Case study: Contoso Budgeting', intro: 'Contoso has daily FactSales, monthly FactBudget by Product Category, and shared DimDate and DimProduct tables. The report must compare Sales with Budget by month and category. Analysts have added bidirectional relationships to make slicers work, but some visuals are slow and totals are unexpected.' };
-  window.MODEL_QUESTION_BANK = [
-    q('m01','Table and column properties','Choose ONE','A surrogate key column is needed for relationships but should not appear in report field lists for authors. What should you do?', ['Delete the column from the model.','Hide the column in report view.','Change the column to Text.','Create a bookmark.'], 'B', 'Hiding a technical key keeps it available for relationships and calculations while reducing clutter for report authors.', 'Deleting it can break relationships. Data type and bookmarks do not control field-list visibility.', 'Keep technical model fields, but hide them from report view.'),
-    q('m02','Table and column properties','Choose ONE','A Sales Amount measure should display as currency with two decimal places throughout the report. Where should you configure this?', ['The measure format property in the model.','A slicer.','The relationship cardinality.','The query privacy level.'], 'A', 'Formatting a measure in the model applies the intended display consistently wherever the measure is used.', 'A slicer filters data. Cardinality and privacy levels do not control number display.', 'Use model formatting for reusable, consistent measure display.'),
-    q('m03','Table and column properties','Choose ONE','A Product table has Category, Subcategory, and Product columns. Users should be able to drill from Category to Subcategory to Product in a visual. What should you create?', ['A hierarchy in the Product table.','A many-to-many relationship.','A calculated table for each category.','A report tooltip.'], 'A', 'A hierarchy gives report users an ordered drill path through related attributes in the same dimension.', 'Relationships connect tables, while calculated tables and tooltips do not create a drill hierarchy.', 'Natural attribute drill paths belong in a hierarchy.'),
-    q('m04','Role-playing dimensions','Choose ONE','FactSales has both OrderDate and ShipDate. A report must slice sales by either date role at the same time. What is the clearest model design?', ['Create separate role-playing Date tables named Order Date and Ship Date.','Use one Date table with two active relationships to FactSales.','Create a many-to-many relationship between dates and sales.','Store both dates as text in FactSales.'], 'A', 'Separate role-playing Date tables allow both date roles to be active and independently usable in the same report.', 'Only one active relationship can exist between the same two tables. Many-to-many and text dates do not solve the role requirement.', 'Need two date roles simultaneously → separate role-playing date dimensions.'),
-    q('m05','Role-playing dimensions','Choose ONE','FactSales has active OrderDate-to-DimDate and inactive ShipDate-to-DimDate relationships. You need a Ship Date Sales measure without changing the active relationship. Which DAX function should the measure use?', ['USERELATIONSHIP','RELATED','DISTINCTCOUNT','FORMAT'], 'A', 'USERELATIONSHIP activates a specified inactive relationship for the evaluation of that calculation only.', 'RELATED retrieves a related value in row context. DISTINCTCOUNT and FORMAT do not activate relationships.', 'Inactive date relationship for one measure → USERELATIONSHIP inside CALCULATE.'),
-    q('m06','Relationships','Choose ONE','DimCustomer contains one row per CustomerKey. FactSales contains many rows for each CustomerKey. What relationship cardinality is appropriate from FactSales to DimCustomer?', ['Many-to-one (*:1)','One-to-one (1:1)','Many-to-many (*:*)','One-to-many from FactSales to DimCustomer'], 'A', 'The fact table has repeated customer keys, while the dimension has a unique key. That is many-to-one from fact to dimension, equivalent to one-to-many from dimension to fact.', 'One-to-one requires uniqueness on both sides. Many-to-many is not needed when a clean dimension key exists.', 'Fact rows are many; dimension key rows are one.'),
-    q('m07','Relationships','Choose ONE','A relationship cannot be set to one-to-many because the supposed lookup column contains duplicate values. What should you do first?', ['Fix or redesign the lookup table so its key is unique.','Change the relationship to both-direction filtering.','Hide the duplicate rows in a report.','Change all keys to decimal numbers.'], 'A', 'The one side of a one-to-many relationship must contain unique values. Resolve duplicates or create an appropriate dimension before modeling.', 'Filter direction does not make a key unique. Hiding report rows and changing numeric type do not repair model integrity.', 'A reliable dimension starts with a unique key.'),
-    q('m08','Relationships','Choose ONE','In a normal star schema, a Product slicer should filter FactSales. Which cross-filter direction should you use by default?', ['Single direction from DimProduct to FactSales.','Single direction from FactSales to DimProduct.','Both directions on every relationship.','No relationship.'], 'A', 'A star schema normally filters from dimensions to facts in one direction. It is predictable and usually performs well.', 'Fact-to-dimension filtering is the reverse of the normal path. Both directions everywhere can create ambiguity and extra work.', 'Default star schema path: dimension → fact, single direction.'),
-    q('m09','Relationships','Choose TWO','Why should bidirectional cross-filtering be used only when needed?', ['It can create ambiguous filter paths.','It can negatively affect performance.','It automatically makes duplicate keys unique.','It replaces the need for measures.','It converts Import tables to DirectQuery.'], 'A and B', 'Both-direction filtering can introduce multiple paths for filters and can add performance cost. Use it for a defined requirement, not as a default.', 'It does not repair keys, replace DAX, or change a table storage mode.', 'Bidirectional filters are powerful but can be ambiguous and slow.'),
-    q('m10','Relationships','Choose ONE','A bridge table contains one row per Student-Course enrollment. Students and Courses each have unique keys. How should the bridge relate to the two dimensions?', ['Create one-to-many relationships from each dimension to the bridge.','Create a direct many-to-many relationship between Students and Courses only.','Create one-to-one relationships from the bridge to both dimensions.','Remove the bridge and append all tables.'], 'A', 'A bridge table models the enrollment fact at the intersection of Student and Course. Each dimension filters the bridge through a one-to-many relationship.', 'A direct many-to-many can hide the bridge grain. One-to-one is false because each student and course can have many enrollments.', 'Model the real intersection as a bridge/fact table.'),
-    q('m11','Common date table','Choose ONE','You need reliable year-to-date and prior-year calculations across multiple fact tables. What should you create?', ['One common Date table with a continuous, unique date column and mark it as a date table.','A separate disconnected date list on every report page.','A text month column in each fact table only.','A many-to-many relationship between all fact tables.'], 'A', 'A common marked Date table provides a consistent calendar dimension for relationships and time intelligence calculations.', 'Disconnected lists do not filter facts. Text months lack full calendar behavior. Facts should not be related directly to each other.', 'Time intelligence needs a proper shared date dimension.'),
-    q('m12','Common date table','Choose ONE','Your Date table has one row per day from 2023-01-01 through 2026-12-31. Its Date column contains no blanks or duplicates. Why mark it as a date table?', ['To identify the column Power BI should use as the model date table for time intelligence.','To change all fact tables to Import mode.','To make every relationship bidirectional.','To create an automatic bookmark.'], 'A', 'Marking identifies the designated date column for the model’s date-table behavior and time intelligence expectations.', 'It does not change storage mode, cross-filter direction, or navigation.', 'Mark the intentional calendar table rather than relying on accidental date behavior.'),
-    q('m13','Calculated columns','Choose ONE','Each sales row needs Margin = SalesAmount - CostAmount, and the value will be used to group and filter individual rows. What should you create?', ['A calculated column in FactSales.','A measure only.','A report tooltip.','A calculation group.'], 'A', 'A calculated column is evaluated row by row during model refresh and becomes a stored field that can be used to group or filter rows.', 'A measure is evaluated in query context and does not create a row-level field. Tooltips and calculation groups are not row fields.', 'Row-level stored attribute needed for grouping/filtering → calculated column.'),
-    q('m14','Measures and calculated columns','Choose ONE','You need Total Margin to change correctly when users slice by Region, Product, and Year. What should you create?', ['A measure such as SUM(FactSales[SalesAmount]) - SUM(FactSales[CostAmount]).','A calculated column that repeats the grand total.','A hidden relationship.','A static calculated table.'], 'A', 'A measure evaluates in the current filter context, so its value changes for each visual cell and slicer selection.', 'A calculated column is stored at refresh and does not recalculate per visual context. Relationships and tables do not express the aggregation.', 'Dynamic aggregation across filters → measure.'),
-    q('m15','Calculated tables','Choose ONE','You need a table containing every date from the earliest to latest transaction date, with Year, Month, and Quarter attributes. The table should refresh when the model refreshes. What should you create?', ['A calculated Date table using DAX.','A card visual.','A report-level filter.','A quick measure.'], 'A', 'A calculated table can generate a reusable calendar structure as part of the model during refresh.', 'Visuals and filters do not create model tables. A quick measure creates a measure, not a table.', 'DAX can create model tables when the structure belongs in the semantic model.'),
-    q('m16','Single aggregation measures','Choose ONE','Which measure correctly returns the total of the SalesAmount column?', ['Total Sales = SUM(FactSales[SalesAmount])','Total Sales = FactSales[SalesAmount]','Total Sales = COUNT(FactSales[SalesAmount])','Total Sales = VALUES(FactSales[SalesAmount])'], 'A', 'SUM aggregates the numeric SalesAmount column in the current filter context.', 'A bare column is not a scalar measure. COUNT counts nonblank values, and VALUES returns a table of distinct values.', 'Simple numeric total → SUM(column).'),
-    q('m17','Basic statistical functions','Choose ONE','You need the number of distinct customers who placed an order in the current filter context. Which measure is best?', ['DISTINCTCOUNT(FactSales[CustomerKey])','COUNT(FactSales[CustomerKey])','SUM(FactSales[CustomerKey])','AVERAGE(FactSales[CustomerKey])'], 'A', 'DISTINCTCOUNT counts unique customer keys after report filters are applied.', 'COUNT counts order rows, not unique customers. Summing or averaging an identifier is meaningless.', 'Unique entities → DISTINCTCOUNT of the key.'),
-    q('m18','CALCULATE','Choose ONE','You have [Total Sales]. You need a measure that returns sales only for Product Category = Bikes, regardless of the current category filter. What is the key DAX function?', ['CALCULATE','FORMAT','RELATED','RANKX'], 'A', 'CALCULATE evaluates an expression in modified filter context. It can replace the current category filter with Bikes for this calculation.', 'FORMAT changes display, RELATED retrieves related values, and RANKX ranks values.', 'CALCULATE = evaluate an expression after changing filter context.'),
-    q('m19','CALCULATE','Choose ONE','A visual is filtered to Category = Accessories. A measure uses CALCULATE([Total Sales], Product[Category] = "Bikes"). What category does that measure evaluate?', ['Bikes','Accessories and Bikes together','All categories because the filter is ignored','No categories because CALCULATE cannot filter'], 'A', 'A filter argument on the same column replaces the existing filter on that column unless you use logic such as KEEPFILTERS.', 'The two category values are not automatically combined. CALCULATE can absolutely modify filter context.', 'A CALCULATE filter normally replaces a current filter on the same column.'),
-    q('m20','Time intelligence','Choose ONE','A report is filtered to March 2026. You need sales from January 1, 2026 through March 31, 2026. Which time-intelligence pattern is appropriate?', ['CALCULATE([Total Sales], DATESYTD(DimDate[Date]))','SUM(FactSales[SalesAmount]) / 12','DISTINCTCOUNT(DimDate[Date])','RELATED(DimDate[Year])'], 'A', 'DATESYTD returns the dates from the start of the year through the current date context, and CALCULATE applies that date set to Total Sales.', 'Dividing by 12 is not year-to-date. Counting dates and retrieving a year do not aggregate sales.', 'YTD = CALCULATE over DATESYTD of the common date column.'),
-    q('m21','Time intelligence','Choose ONE','You need to compare current-period sales with the equivalent period one year earlier. Which function is commonly used inside CALCULATE?', ['SAMEPERIODLASTYEAR','VALUES','COUNTROWS','USERELATIONSHIP'], 'A', 'SAMEPERIODLASTYEAR shifts the current date context back one year, which can be applied to a base measure with CALCULATE.', 'VALUES and COUNTROWS do not shift time. USERELATIONSHIP changes relationship use.', 'Prior-year comparison → shift the current date period back one year.'),
-    q('m22','Semi-additive measures','Choose ONE','An InventorySnapshot table records the quantity on hand at the end of each day. For a month, you need the quantity from the last date in that month, not the sum of daily snapshots. What type of measure is needed?', ['A semi-additive closing-balance measure.','A simple SUM over all snapshot rows.','A DISTINCTCOUNT of inventory rows.','A calculated column that adds every day.'], 'A', 'Inventory is additive across products or locations but not across time. A closing-balance measure selects the last applicable date rather than summing snapshots.', 'Summing daily balances overstates inventory. Counts do not return quantity.', 'Balances are often semi-additive: add across entities, not across time.'),
-    q('m23','Quick measures','Choose ONE','You need a standard year-over-year percentage calculation quickly and want Power BI to generate a DAX starting point that you can inspect. What should you use?', ['A quick measure.','A report page tooltip.','A calculation group only.','A query parameter.'], 'A', 'Quick measures generate common DAX patterns such as time intelligence and comparisons. They are useful for learning or accelerating a standard calculation.', 'Tooltips and parameters serve different purposes. Calculation groups address reusable transformations across measures.', 'Quick measures can create a reliable starting DAX pattern.'),
-    q('m24','Calculation groups','Choose ONE','Your model has 25 base measures. Report authors need Current, YTD, Prior Year, and YoY % versions of each without creating 100 separate measures. What should you use?', ['A time-intelligence calculation group.','A calculated column for every measure.','A bidirectional relationship.','A report theme.'], 'A', 'Calculation groups apply reusable calculation items to existing measures, reducing repetitive measures for patterns such as time intelligence.', 'Columns, relationships, and themes do not apply transformations to many measures.', 'Repeated calculation pattern across many measures → calculation group.'),
-    q('m25','Calculation groups','Choose ONE','After creating a calculation group, why should report authors prefer explicit measures rather than relying on implicit column aggregations?', ['Calculation groups do not apply to implicit measures.','Implicit measures always refresh faster.','Explicit measures cannot be formatted.','Implicit measures create relationships automatically.'], 'A', 'Calculation groups are designed to transform explicit measures. A model using them should discourage implicit measures so the intended calculations apply consistently.', 'The other statements are false or irrelevant.', 'Calculation groups need explicit measures to be reusable.'),
-    q('m26','Performance','Choose TWO','Which TWO model changes commonly reduce Import model size and improve report performance?', ['Remove columns that are not needed for reporting or relationships.','Filter out rows that are outside the required analysis scope.','Add duplicate copies of every dimension.','Convert numeric keys to long text values.','Create a bidirectional relationship for every table.'], 'A and B', 'Unused columns and unnecessary rows consume storage and processing work. Removing them early reduces model size and often improves refresh and query performance.', 'Duplicate dimensions, long text keys, and blanket bidirectional filters tend to add complexity or cost.', 'A lean model starts by removing data nobody needs.'),
-    q('m27','Performance','Choose ONE','A fact table contains one row per click, but the report only analyzes daily totals by Product and Region. The click-level detail is not required. What is the best optimization?', ['Aggregate the data to the required daily Product-Region grain before loading.','Add more columns to the click table.','Use a many-to-many relationship.','Hide the table in report view only.'], 'A', 'Reducing granularity removes unnecessary rows while retaining the level required by reports. It can substantially improve model size and query speed.', 'More columns and many-to-many relationships do not reduce detail. Hiding a table does not remove its storage cost.', 'Load the lowest detail level that still answers the report questions.'),
-    q('m28','Performance Analyzer','Choose ONE','A report page is slow. You need to determine which visual takes the longest and inspect its query. What should you use first?', ['Performance Analyzer, then open the visual query in DAX query view.','A custom theme.','The Selection pane only.','A date hierarchy.'], 'A', 'Performance Analyzer records visual timings and lets you copy or run a visual query in DAX query view for deeper investigation.', 'Themes, layers, and hierarchies do not diagnose query duration.', 'Slow report → measure the visuals first with Performance Analyzer.'),
-    q('m29','DAX query view','Choose ONE','After Performance Analyzer identifies a slow matrix, you want to edit and rerun the DAX query that powers it to isolate the problem. Where should you work?', ['DAX query view.','Power Query column profiling.','The mobile layout view.','The bookmark pane.'], 'A', 'DAX query view is the environment for running and modifying DAX queries, including queries obtained from Performance Analyzer.', 'Power Query profiles source transformations. Mobile layout and bookmarks are report design features.', 'Visual DAX query investigation → DAX query view.'),
-    q('m30','Relationships','Choose TWO','Using the Northwind model, which TWO relationship configurations are correct for normal Order Date analysis?', ['DimDate[DateKey] to FactSales[OrderDateKey] should be active.','DimCustomer[CustomerKey] to FactSales[CustomerKey] should be one-to-many from DimCustomer to FactSales.','DimDate and FactSales should have two active relationships.','FactSales should filter every dimension in both directions by default.','DimProduct should relate directly to DimCustomer.'], 'A and B', 'The order-date relationship is the normal active path. Customer is a dimension with a unique key that filters the many sales rows.', 'Only one relationship between the same two tables can be active. Blanket bidirectional filtering and direct dimension-to-dimension links are not normal star-schema design.', 'Use active dimension-to-fact relationships for the default analysis path.', northwind),
-    q('m31','Role-playing dimensions','Choose ONE','Using the Northwind model, logistics needs [Ship Date Sales] while Order Date remains the default report date. Which measure pattern is best?', ['CALCULATE([Total Sales], USERELATIONSHIP(FactSales[ShipDateKey], DimDate[DateKey]))','SUM(FactSales[ShipDateKey])','CALCULATE([Total Sales], FactSales[ShipDateKey] = FactSales[OrderDateKey])','RELATED(DimDate[Date])'], 'A', 'CALCULATE changes the relationship used for this one measure by activating the inactive ShipDate relationship with USERELATIONSHIP.', 'Summing a key is meaningless. Equality does not activate a relationship. RELATED is not an aggregation pattern.', 'Keep the common default active; activate the alternate date role inside the specific measure.', northwind),
-    q('m32','Case study: Contoso Budgeting','Choose ONE','Using the Contoso model, Sales is daily by Product while Budget is monthly by Product Category. What is the most appropriate shared modeling approach?', ['Relate both facts to shared Date and Product dimensions at the grains each fact supports.','Create a direct relationship from FactSales to FactBudget.','Make every relationship bidirectional.','Append daily sales and monthly budget into one table without a type column.'], 'A', 'A star schema lets both facts be filtered by conformed dimensions. Budget should use the Date and Product attributes that match its monthly category grain.', 'Fact-to-fact relationships and blanket bidirectional filters commonly create ambiguity. Appending different business processes can confuse measures.', 'Multiple facts should share conformed dimensions, not filter each other directly.', budget),
-    q('m33','Case study: Contoso Budgeting','Choose TWO','Using the Contoso model, analysts report slow visuals and unexpected totals after enabling bidirectional filters broadly. Which TWO improvements are most appropriate?', ['Return ordinary dimension-to-fact relationships to single-direction filtering where possible.','Use Performance Analyzer to identify the actual slow visuals before changing DAX.','Keep both direction on every relationship because it is always more accurate.','Add more many-to-many relationships.','Create duplicate fact tables for every visual.'], 'A and B', 'Single-direction star-schema relationships are usually simpler and more predictable. Performance Analyzer provides evidence about which visuals need attention.', 'Broad bidirectional and many-to-many relationships can increase ambiguity and cost. Duplicating facts adds model size.', 'Simplify relationship paths, then measure performance before tuning.', budget),
-    q('m34','Basic statistical functions','Choose ONE','A manager wants the median order value because a few very large orders distort the average. Which DAX aggregation is appropriate?', ['MEDIAN(FactSales[OrderValue])','SUM(FactSales[OrderValue])','DISTINCTCOUNT(FactSales[OrderValue])','MIN(FactSales[OrderValue])'], 'A', 'MEDIAN returns the middle value after ordering the values and is less affected by extreme outliers than an average.', 'SUM is a total, DISTINCTCOUNT counts distinct values, and MIN returns only the smallest value.', 'When outliers distort the average, consider median.'),
-    q('m35','CALCULATE','Choose ONE','A base measure [Total Sales] already works by all report filters. You need [Online Sales] that adds only Channel = Online while retaining filters such as Year and Region. Which pattern is correct?', ['CALCULATE([Total Sales], FactSales[Channel] = "Online")','SUM(FactSales[Channel])','FORMAT([Total Sales], "Online")','RELATED(FactSales[Channel])'], 'A', 'CALCULATE adds or replaces the Channel filter while other filters such as Year and Region remain in the evaluation context.', 'The other functions do not create a filtered aggregation of the base measure.', 'Build a base measure, then use CALCULATE to create meaningful filtered variants.'),
-    q('m36','Date relationships','Choose ONE','A Date dimension contains a DateTime value at midnight, while FactSales stores OrderDateTime values with times throughout the day. A relationship produces unexpected unmatched rows. What should you do?', ['Create matching date-only values before relating the tables.','Set the relationship to bidirectional.','Change DateKey to a measure.','Hide the unmatched rows in a visual.'], 'A', 'Relationship values must match. Removing the time portion or using a proper date key creates compatible values for the common date relationship.', 'Direction does not make different datetime values equal. Measures and hiding rows do not repair the key.', 'Relationship columns must use matching values and compatible granularity.')
-  ];
-})();
+window.MODEL_QUESTION_BANK = [
+  {
+    "id": "m01",
+    "topic": "Table and column properties",
+    "type": "Choose TWO",
+    "prompt": "FactSales contains an internal OrderKey used in relationships and a numeric-looking InvoiceNumber used only as a label. Report authors should not drag OrderKey into visuals, and InvoiceNumber must not default to Sum. Which TWO model properties should you configure?",
+    "options": [
+      "Hide OrderKey in report view.",
+      "Set InvoiceNumber default summarization to Don’t summarize.",
+      "Delete OrderKey from the model.",
+      "Hide InvoiceNumber and set Quantity to Don’t summarize.",
+      "Create a bidirectional relationship for InvoiceNumber."
+    ],
+    "answer": "A and B",
+    "why": "A relationship key can remain in the model while hidden from report authors. A numeric identifier should use Don’t summarize so visuals do not offer a meaningless sum by default.",
+    "wrong": "Deleting the key can break relationships. Hiding the business identifier removes a useful label. Cross-filter direction does not control summarization.",
+    "remember": "Configure columns for their analytical role: hide technical keys and do not summarize identifiers.",
+    "source": "model"
+  },
+  {
+    "id": "m02",
+    "topic": "Table and column properties",
+    "type": "Choose ONE",
+    "prompt": "A Sales Amount measure should display as currency with two decimal places throughout the report. Where should you configure this?",
+    "options": [
+      "The measure format property in the model.",
+      "A slicer.",
+      "The relationship cardinality.",
+      "The query privacy level."
+    ],
+    "answer": "A",
+    "why": "Formatting a measure in the model applies the intended display consistently wherever the measure is used.",
+    "wrong": "A slicer filters data. Cardinality and privacy levels do not control number display.",
+    "remember": "Use model formatting for reusable, consistent measure display.",
+    "source": "model"
+  },
+  {
+    "id": "m03",
+    "topic": "Table and column properties",
+    "type": "Choose TWO",
+    "prompt": "DimDate contains Year, Quarter, MonthName, MonthNumber, and Date. Users must drill Year → Quarter → MonthName, and months must appear chronologically rather than alphabetically. Which TWO configurations are required?",
+    "options": [
+      "Create a Year–Quarter–MonthName hierarchy.",
+      "Set MonthNumber to sort by MonthName.",
+      "Create a many-to-many relationship to FactSales.",
+      "Set MonthName to sort by MonthNumber.",
+      "Convert MonthName to a measure."
+    ],
+    "answer": "A and D",
+    "why": "The hierarchy defines the drill path. Sort by column uses MonthNumber to order the MonthName labels chronologically.",
+    "wrong": "Reversing the sort mapping does not order MonthName. Relationship cardinality is unrelated, and a text attribute should not become a measure.",
+    "remember": "Hierarchy controls drill; Sort by column controls label order.",
+    "source": "model"
+  },
+  {
+    "id": "m04",
+    "topic": "Role-playing dimensions",
+    "type": "Choose ONE",
+    "prompt": "FactSales has both OrderDate and ShipDate. A report must slice sales by either date role at the same time. What is the clearest model design?",
+    "options": [
+      "Create separate role-playing Date tables named Order Date and Ship Date.",
+      "Use one Date table with two active relationships to FactSales.",
+      "Create a many-to-many relationship between dates and sales.",
+      "Store both dates as text in FactSales."
+    ],
+    "answer": "A",
+    "why": "Separate role-playing Date tables allow both date roles to be active and independently usable in the same report.",
+    "wrong": "Only one active relationship can exist between the same two tables. Many-to-many and text dates do not solve the role requirement.",
+    "remember": "Need two date roles simultaneously → separate role-playing date dimensions.",
+    "source": "model"
+  },
+  {
+    "id": "m05",
+    "topic": "Role-playing dimensions",
+    "type": "Choose ONE",
+    "prompt": "FactSales has an active relationship from OrderDateKey to DimDate and an inactive relationship from ShipDateKey to DimDate. Which measure returns sales by the Ship Date context while leaving Order Date as the model default?",
+    "options": [
+      "Ship Date Sales = CALCULATE([Total Sales], USERELATIONSHIP(FactSales[ShipDateKey], DimDate[DateKey]))",
+      "Ship Date Sales = SUM(FactSales[ShipDateKey])",
+      "Ship Date Sales = CALCULATE([Total Sales], CROSSFILTER(FactSales[OrderDateKey], DimDate[DateKey], BOTH))",
+      "Ship Date Sales = RELATED(DimDate[Date])"
+    ],
+    "answer": "A",
+    "why": "USERELATIONSHIP activates the existing inactive Ship Date relationship only for the measure evaluation inside CALCULATE.",
+    "wrong": "Summing a key is meaningless. CROSSFILTER changes direction on the Order Date relationship rather than activating Ship Date. RELATED returns a row-context value, not the required aggregation.",
+    "remember": "Alternate date role in one measure: CALCULATE plus USERELATIONSHIP.",
+    "source": "model"
+  },
+  {
+    "id": "m06",
+    "topic": "Relationships",
+    "type": "Choose TWO",
+    "prompt": "DimCustomer contains one row per CustomerKey. FactSales contains many rows per CustomerKey. Customer slicers must filter sales, but selecting a sales row must not filter the customer dimension. Which TWO relationship settings are appropriate?",
+    "options": [
+      "Many-to-one (*:1) from FactSales to DimCustomer.",
+      "Single-direction filtering from DimCustomer to FactSales.",
+      "Many-to-many cardinality.",
+      "Both-direction filtering.",
+      "One-to-one cardinality."
+    ],
+    "answer": "A and B",
+    "why": "The unique dimension is the one side and the repeating fact is the many side. Single direction from dimension to fact supports normal star-schema filtering without unnecessary reverse propagation.",
+    "wrong": "Many-to-many and one-to-one contradict the stated key uniqueness. Both direction adds behavior the requirement explicitly does not need.",
+    "remember": "Star schema default: dimension 1 → fact many, with a single filter direction.",
+    "source": "model"
+  },
+  {
+    "id": "m07",
+    "topic": "Relationships",
+    "type": "Choose ONE",
+    "prompt": "A relationship cannot be set to one-to-many because the supposed lookup column contains duplicate values. What should you do first?",
+    "options": [
+      "Fix or redesign the lookup table so its key is unique.",
+      "Change the relationship to both-direction filtering.",
+      "Hide the duplicate rows in a report.",
+      "Change all keys to decimal numbers."
+    ],
+    "answer": "A",
+    "why": "The one side of a one-to-many relationship must contain unique values. Resolve duplicates or create an appropriate dimension before modeling.",
+    "wrong": "Filter direction does not make a key unique. Hiding report rows and changing numeric type do not repair model integrity.",
+    "remember": "A reliable dimension starts with a unique key.",
+    "source": "model"
+  },
+  {
+    "id": "m08",
+    "topic": "Relationships",
+    "type": "Choose ONE",
+    "prompt": "In a normal star schema, a Product slicer should filter FactSales. Which cross-filter direction should you use by default?",
+    "options": [
+      "Single direction from DimProduct to FactSales.",
+      "Single direction from FactSales to DimProduct.",
+      "Both directions on every relationship.",
+      "No relationship."
+    ],
+    "answer": "A",
+    "why": "A star schema normally filters from dimensions to facts in one direction. It is predictable and usually performs well.",
+    "wrong": "Fact-to-dimension filtering is the reverse of the normal path. Both directions everywhere can create ambiguity and extra work.",
+    "remember": "Default star schema path: dimension → fact, single direction.",
+    "source": "model"
+  },
+  {
+    "id": "m09",
+    "topic": "Relationships",
+    "type": "Choose TWO",
+    "prompt": "Why should bidirectional cross-filtering be used only when needed?",
+    "options": [
+      "It can create ambiguous filter paths.",
+      "It can negatively affect performance.",
+      "It automatically makes duplicate keys unique.",
+      "It replaces the need for measures.",
+      "It converts Import tables to DirectQuery."
+    ],
+    "answer": "A and B",
+    "why": "Both-direction filtering can introduce multiple paths for filters and can add performance cost. Use it for a defined requirement, not as a default.",
+    "wrong": "It does not repair keys, replace DAX, or change a table storage mode.",
+    "remember": "Bidirectional filters are powerful but can be ambiguous and slow.",
+    "source": "model"
+  },
+  {
+    "id": "m10",
+    "topic": "Relationships",
+    "type": "Choose ONE",
+    "prompt": "A bridge table contains one row per Student-Course enrollment. Students and Courses each have unique keys. How should the bridge relate to the two dimensions?",
+    "options": [
+      "Create one-to-many relationships from each dimension to the bridge.",
+      "Create a direct many-to-many relationship between Students and Courses only.",
+      "Create one-to-one relationships from the bridge to both dimensions.",
+      "Remove the bridge and append all tables."
+    ],
+    "answer": "A",
+    "why": "A bridge table models the enrollment fact at the intersection of Student and Course. Each dimension filters the bridge through a one-to-many relationship.",
+    "wrong": "A direct many-to-many can hide the bridge grain. One-to-one is false because each student and course can have many enrollments.",
+    "remember": "Model the real intersection as a bridge/fact table.",
+    "source": "model"
+  },
+  {
+    "id": "m11",
+    "topic": "Common date table",
+    "type": "Choose TWO",
+    "prompt": "Sales and Inventory are separate fact tables. Both require Year, Quarter, Month, YTD, and prior-year analysis using the same calendar. Which TWO design choices best support the requirement?",
+    "options": [
+      "Create one conformed Date dimension with a unique continuous Date column.",
+      "Relate the Date dimension one-to-many to each fact at the supported date grain.",
+      "Create a direct many-to-many relationship between Sales and Inventory.",
+      "Store only MonthName text in each fact and remove dates.",
+      "Use a disconnected date table on each report page."
+    ],
+    "answer": "A and B",
+    "why": "A shared, continuous Date dimension gives both facts consistent calendar attributes and time-intelligence behavior. Each fact relates independently to the date dimension.",
+    "wrong": "Fact-to-fact relationships introduce ambiguity. Month labels alone cannot identify years or dates. Disconnected page tables do not provide shared model filtering.",
+    "remember": "Multiple facts should share conformed dimensions rather than relate directly to one another.",
+    "source": "model"
+  },
+  {
+    "id": "m12",
+    "topic": "Common date table",
+    "type": "Choose ONE",
+    "prompt": "Your Date table has one row per day from 2023-01-01 through 2026-12-31. Its Date column contains no blanks or duplicates. Why mark it as a date table?",
+    "options": [
+      "To identify the column Power BI should use as the model date table for time intelligence.",
+      "To change all fact tables to Import mode.",
+      "To make every relationship bidirectional.",
+      "To create an automatic bookmark."
+    ],
+    "answer": "A",
+    "why": "Marking identifies the designated date column for the model’s date-table behavior and time intelligence expectations.",
+    "wrong": "It does not change storage mode, cross-filter direction, or navigation.",
+    "remember": "Mark the intentional calendar table rather than relying on accidental date behavior.",
+    "source": "model"
+  },
+  {
+    "id": "m13",
+    "topic": "Calculated columns",
+    "type": "Choose ONE",
+    "prompt": "Each sales row needs Margin = SalesAmount - CostAmount, and the value will be used to group and filter individual rows. What should you create?",
+    "options": [
+      "A calculated column in FactSales.",
+      "A measure only.",
+      "A report tooltip.",
+      "A calculation group."
+    ],
+    "answer": "A",
+    "why": "A calculated column is evaluated row by row during model refresh and becomes a stored field that can be used to group or filter rows.",
+    "wrong": "A measure is evaluated in query context and does not create a row-level field. Tooltips and calculation groups are not row fields.",
+    "remember": "Row-level stored attribute needed for grouping/filtering → calculated column.",
+    "source": "model"
+  },
+  {
+    "id": "m14",
+    "topic": "Measures and calculated columns",
+    "type": "Choose ONE",
+    "prompt": "FactSales stores Quantity, UnitPrice, and UnitCost. You need Total Margin to respond to all report filters without storing a Margin column for every row. Which measure should you create?",
+    "options": [
+      "Total Margin = SUMX(FactSales, FactSales[Quantity] * (FactSales[UnitPrice] - FactSales[UnitCost]))",
+      "Total Margin = FactSales[Quantity] * (FactSales[UnitPrice] - FactSales[UnitCost])",
+      "Total Margin = SUM(FactSales[Quantity]) * SUM(FactSales[UnitPrice] - FactSales[UnitCost])",
+      "Total Margin = CALENDAR(MIN(FactSales[OrderDate]), MAX(FactSales[OrderDate]))"
+    ],
+    "answer": "A",
+    "why": "SUMX evaluates the row-level margin expression for each visible fact row and then sums the results in the current filter context.",
+    "wrong": "A measure cannot reference multiple raw row values without an iterator or aggregation. Multiplying separate totals produces a different result. CALENDAR returns a table.",
+    "remember": "When the arithmetic must occur per row before aggregation, use an X iterator such as SUMX.",
+    "source": "model"
+  },
+  {
+    "id": "m15",
+    "topic": "Calculated tables",
+    "type": "Choose ONE",
+    "prompt": "You need a table containing every date from the earliest to latest transaction date, with Year, Month, and Quarter attributes. The table should refresh when the model refreshes. What should you create?",
+    "options": [
+      "A calculated Date table using DAX.",
+      "A card visual.",
+      "A report-level filter.",
+      "A quick measure."
+    ],
+    "answer": "A",
+    "why": "A calculated table can generate a reusable calendar structure as part of the model during refresh.",
+    "wrong": "Visuals and filters do not create model tables. A quick measure creates a measure, not a table.",
+    "remember": "DAX can create model tables when the structure belongs in the semantic model.",
+    "source": "model"
+  },
+  {
+    "id": "m16",
+    "topic": "Single aggregation measures",
+    "type": "Choose ONE",
+    "prompt": "You have measures [Total Sales] and [Total Cost]. Gross Margin % must return blank rather than an error when sales is zero and must respond to report filters. Which measure is best?",
+    "options": [
+      "Gross Margin % = DIVIDE([Total Sales] - [Total Cost], [Total Sales])",
+      "Gross Margin % = ([Total Sales] - [Total Cost]) / FactSales[SalesAmount]",
+      "Gross Margin % = SUM(FactSales[SalesAmount])",
+      "Gross Margin % = FORMAT([Total Sales], \"0.0%\")"
+    ],
+    "answer": "A",
+    "why": "DIVIDE safely handles a zero or blank denominator and returns a numeric ratio that can be formatted as a percentage.",
+    "wrong": "A measure cannot use an unaggregated fact column as the denominator. SUM is not a ratio. FORMAT returns text, which harms numeric analysis.",
+    "remember": "For ratios, use measures and DIVIDE; apply display formatting separately.",
+    "source": "model"
+  },
+  {
+    "id": "m17",
+    "topic": "Basic statistical functions",
+    "type": "Choose ONE",
+    "prompt": "You need the number of distinct customers with at least one Completed order in the current Date, Product, and Region context. Which measure is correct?",
+    "options": [
+      "Completed Customers = CALCULATE(DISTINCTCOUNT(FactSales[CustomerKey]), FactSales[Status] = \"Completed\")",
+      "Completed Customers = COUNT(FactSales[CustomerKey])",
+      "Completed Customers = DISTINCTCOUNT(DimCustomer[CustomerKey]) + COUNT(FactSales[Status])",
+      "Completed Customers = SUM(FactSales[CustomerKey])"
+    ],
+    "answer": "A",
+    "why": "DISTINCTCOUNT counts customers, while CALCULATE adds the Completed-status filter and retains unrelated filters such as Date, Product, and Region.",
+    "wrong": "COUNT counts order rows rather than customers. Adding unrelated counts is invalid logic. Customer keys should not be summed.",
+    "remember": "Conditional unique count: CALCULATE around DISTINCTCOUNT.",
+    "source": "model"
+  },
+  {
+    "id": "m18",
+    "topic": "CALCULATE",
+    "type": "Choose ONE",
+    "prompt": "A measure must return Bikes sales while ignoring every filter from the Product table, including Brand and Color, but it must retain Date and Region filters. Which expression meets the requirement?",
+    "options": [
+      "CALCULATE([Total Sales], REMOVEFILTERS(Product), Product[Category] = \"Bikes\")",
+      "CALCULATE([Total Sales], REMOVEFILTERS(DimDate), Product[Category] = \"Bikes\")",
+      "CALCULATE([Total Sales], ALL(FactSales))",
+      "FILTER(Product, Product[Category] = \"Bikes\")"
+    ],
+    "answer": "A",
+    "why": "REMOVEFILTERS(Product) clears all product selections, after which the Bikes filter is applied. Filters from other dimensions remain in context.",
+    "wrong": "Removing date filters violates the requirement. Clearing the fact table can also remove intended filtering behavior. FILTER alone returns a table, not the requested scalar measure.",
+    "remember": "Be precise about which table’s filters to remove; CALCULATE then applies the intended replacement.",
+    "source": "model"
+  },
+  {
+    "id": "m19",
+    "topic": "CALCULATE",
+    "type": "Choose ONE",
+    "prompt": "A visual is filtered to Category = Accessories. A measure uses CALCULATE([Total Sales], Product[Category] = \"Bikes\"). What category does that measure evaluate?",
+    "options": [
+      "Bikes",
+      "Accessories and Bikes together",
+      "All categories because the filter is ignored",
+      "No categories because CALCULATE cannot filter"
+    ],
+    "answer": "A",
+    "why": "A filter argument on the same column replaces the existing filter on that column unless you use logic such as KEEPFILTERS.",
+    "wrong": "The two category values are not automatically combined. CALCULATE can absolutely modify filter context.",
+    "remember": "A CALCULATE filter normally replaces a current filter on the same column.",
+    "source": "model"
+  },
+  {
+    "id": "m20",
+    "topic": "Time intelligence",
+    "type": "Choose ONE",
+    "prompt": "The fiscal year ends on June 30. A report is filtered to September 15, 2026, and Fiscal YTD Sales must accumulate from July 1, 2026. Which pattern is appropriate?",
+    "options": [
+      "CALCULATE([Total Sales], DATESYTD(DimDate[Date], \"6/30\"))",
+      "CALCULATE([Total Sales], SAMEPERIODLASTYEAR(DimDate[Date]))",
+      "TOTALMTD([Total Sales], DimDate[Date])",
+      "CALCULATE([Total Sales], REMOVEFILTERS(DimDate))"
+    ],
+    "answer": "A",
+    "why": "DATESYTD supports a year-end argument. With June 30 as year end, the fiscal year begins July 1 and accumulates through the current date context.",
+    "wrong": "SAMEPERIODLASTYEAR shifts the period. TOTALMTD accumulates only the month. Removing all date filters does not create fiscal YTD.",
+    "remember": "Calendar YTD and fiscal YTD differ; supply the fiscal year end when required.",
+    "source": "model"
+  },
+  {
+    "id": "m21",
+    "topic": "Time intelligence",
+    "type": "Choose ONE",
+    "prompt": "You need to compare current-period sales with the equivalent period one year earlier. Which function is commonly used inside CALCULATE?",
+    "options": [
+      "SAMEPERIODLASTYEAR",
+      "VALUES",
+      "COUNTROWS",
+      "USERELATIONSHIP"
+    ],
+    "answer": "A",
+    "why": "SAMEPERIODLASTYEAR shifts the current date context back one year, which can be applied to a base measure with CALCULATE.",
+    "wrong": "VALUES and COUNTROWS do not shift time. USERELATIONSHIP changes relationship use.",
+    "remember": "Prior-year comparison → shift the current date period back one year.",
+    "source": "model"
+  },
+  {
+    "id": "m22",
+    "topic": "Semi-additive measures",
+    "type": "Choose ONE",
+    "prompt": "InventorySnapshot has one row per Product and Date. [Inventory Qty] sums QuantityOnHand in the current context. Which measure returns the total inventory on the last visible date of each reporting period instead of summing all daily snapshots?",
+    "options": [
+      "Closing Inventory = CALCULATE([Inventory Qty], LASTDATE(DimDate[Date]))",
+      "Closing Inventory = SUM(InventorySnapshot[QuantityOnHand])",
+      "Closing Inventory = AVERAGE(InventorySnapshot[QuantityOnHand])",
+      "Closing Inventory = CALCULATE([Inventory Qty], SAMEPERIODLASTYEAR(DimDate[Date]))"
+    ],
+    "answer": "A",
+    "why": "LASTDATE restricts the period to its final visible date, producing a semi-additive closing balance across time while still summing products on that date.",
+    "wrong": "SUM adds every daily snapshot. AVERAGE does not represent the closing balance. SAMEPERIODLASTYEAR shifts the period rather than selecting its last date.",
+    "remember": "Snapshot facts often aggregate across products but not across time; choose the required point in time.",
+    "source": "model"
+  },
+  {
+    "id": "m23",
+    "topic": "Quick measures",
+    "type": "Choose ONE",
+    "prompt": "You need a standard year-over-year percentage calculation quickly and want Power BI to generate a DAX starting point that you can inspect. What should you use?",
+    "options": [
+      "A quick measure.",
+      "A report page tooltip.",
+      "A calculation group only.",
+      "A query parameter."
+    ],
+    "answer": "A",
+    "why": "Quick measures generate common DAX patterns such as time intelligence and comparisons. They are useful for learning or accelerating a standard calculation.",
+    "wrong": "Tooltips and parameters serve different purposes. Calculation groups address reusable transformations across measures.",
+    "remember": "Quick measures can create a reliable starting DAX pattern.",
+    "source": "model"
+  },
+  {
+    "id": "m24",
+    "topic": "Calculation groups",
+    "type": "Choose ONE",
+    "prompt": "Your model has 25 base measures. Report authors need Current, YTD, Prior Year, and YoY % versions of each without creating 100 separate measures. What should you use?",
+    "options": [
+      "A time-intelligence calculation group.",
+      "A calculated column for every measure.",
+      "A bidirectional relationship.",
+      "A report theme."
+    ],
+    "answer": "A",
+    "why": "Calculation groups apply reusable calculation items to existing measures, reducing repetitive measures for patterns such as time intelligence.",
+    "wrong": "Columns, relationships, and themes do not apply transformations to many measures.",
+    "remember": "Repeated calculation pattern across many measures → calculation group.",
+    "source": "model"
+  },
+  {
+    "id": "m25",
+    "topic": "Calculation groups",
+    "type": "Choose ONE",
+    "prompt": "After creating a calculation group, why should report authors prefer explicit measures rather than relying on implicit column aggregations?",
+    "options": [
+      "Calculation groups do not apply to implicit measures.",
+      "Implicit measures always refresh faster.",
+      "Explicit measures cannot be formatted.",
+      "Implicit measures create relationships automatically."
+    ],
+    "answer": "A",
+    "why": "Calculation groups are designed to transform explicit measures. A model using them should discourage implicit measures so the intended calculations apply consistently.",
+    "wrong": "The other statements are false or irrelevant.",
+    "remember": "Calculation groups need explicit measures to be reusable.",
+    "source": "model"
+  },
+  {
+    "id": "m26",
+    "topic": "Performance",
+    "type": "Choose TWO",
+    "prompt": "Which TWO model changes commonly reduce Import model size and improve report performance?",
+    "options": [
+      "Remove columns that are not needed for reporting or relationships.",
+      "Filter out rows that are outside the required analysis scope.",
+      "Add duplicate copies of every dimension.",
+      "Convert numeric keys to long text values.",
+      "Create a bidirectional relationship for every table."
+    ],
+    "answer": "A and B",
+    "why": "Unused columns and unnecessary rows consume storage and processing work. Removing them early reduces model size and often improves refresh and query performance.",
+    "wrong": "Duplicate dimensions, long text keys, and blanket bidirectional filters tend to add complexity or cost.",
+    "remember": "A lean model starts by removing data nobody needs.",
+    "source": "model"
+  },
+  {
+    "id": "m27",
+    "topic": "Performance",
+    "type": "Choose ONE",
+    "prompt": "A fact table contains one row per click, but the report only analyzes daily totals by Product and Region. The click-level detail is not required. What is the best optimization?",
+    "options": [
+      "Aggregate the data to the required daily Product-Region grain before loading.",
+      "Add more columns to the click table.",
+      "Use a many-to-many relationship.",
+      "Hide the table in report view only."
+    ],
+    "answer": "A",
+    "why": "Reducing granularity removes unnecessary rows while retaining the level required by reports. It can substantially improve model size and query speed.",
+    "wrong": "More columns and many-to-many relationships do not reduce detail. Hiding a table does not remove its storage cost.",
+    "remember": "Load the lowest detail level that still answers the report questions.",
+    "source": "model"
+  },
+  {
+    "id": "m28",
+    "topic": "Performance Analyzer",
+    "type": "Choose TWO",
+    "prompt": "A report page feels slow. You must identify the visual responsible and then edit and rerun that visual’s generated DAX query to isolate the bottleneck. Which TWO actions should you take?",
+    "options": [
+      "Record the page with Performance Analyzer and compare visual durations.",
+      "Change every relationship to Both before measuring.",
+      "Open or copy the slow visual query into DAX query view.",
+      "Remove all report filters before measuring.",
+      "Rebuild the page with a different theme."
+    ],
+    "answer": "A and C",
+    "why": "Performance Analyzer identifies which visual and phase consume time. DAX query view lets you inspect, edit, and rerun the generated query for focused analysis.",
+    "wrong": "Changing relationships or filters before measuring can hide the true cause. A theme does not diagnose query performance.",
+    "remember": "Measure first with Performance Analyzer; investigate the captured DAX second.",
+    "source": "model"
+  },
+  {
+    "id": "m29",
+    "topic": "DAX query view",
+    "type": "Choose ONE",
+    "prompt": "Performance Analyzer shows a matrix taking 4.8 seconds: DAX query 4.5 seconds, visual display 0.2 seconds, and other 0.1 seconds. What should you investigate first?",
+    "options": [
+      "The measures and model operations used by the matrix query.",
+      "The report theme colors.",
+      "The matrix border thickness.",
+      "The page wallpaper image."
+    ],
+    "answer": "A",
+    "why": "Nearly all elapsed time is in the DAX query, so the first investigation should target measure logic, filter context, relationships, and storage/model behavior used by that query.",
+    "wrong": "Formatting changes might affect rendering but cannot explain a 4.5-second DAX query duration.",
+    "remember": "Use the Performance Analyzer phase breakdown to choose the layer you optimize.",
+    "source": "model"
+  },
+  {
+    "id": "m30",
+    "topic": "Relationships",
+    "type": "Choose TWO",
+    "prompt": "Using the Northwind model, which TWO relationship configurations are correct for normal Order Date analysis?",
+    "options": [
+      "DimDate[DateKey] to FactSales[OrderDateKey] should be active.",
+      "DimCustomer[CustomerKey] to FactSales[CustomerKey] should be one-to-many from DimCustomer to FactSales.",
+      "DimDate and FactSales should have two active relationships.",
+      "FactSales should filter every dimension in both directions by default.",
+      "DimProduct should relate directly to DimCustomer."
+    ],
+    "answer": "A and B",
+    "why": "The order-date relationship is the normal active path. Customer is a dimension with a unique key that filters the many sales rows.",
+    "wrong": "Only one relationship between the same two tables can be active. Blanket bidirectional filtering and direct dimension-to-dimension links are not normal star-schema design.",
+    "remember": "Use active dimension-to-fact relationships for the default analysis path.",
+    "source": "model",
+    "caseStudy": {
+      "title": "Case study: Northwind Traders",
+      "intro": "Northwind has FactSales with OrderDateKey, ShipDateKey, CustomerKey, ProductKey, SalesAmount, and Quantity. DimDate has one row per calendar date and a unique DateKey. DimCustomer and DimProduct each have unique keys. Sales reports normally analyze Order Date, but logistics needs Ship Date analysis. The model must remain easy to understand and responsive."
+    }
+  },
+  {
+    "id": "m31",
+    "topic": "Role-playing dimensions",
+    "type": "Choose ONE",
+    "prompt": "Using the Northwind model, logistics needs [Ship Date Sales] while Order Date remains the default report date. Which measure pattern is best?",
+    "options": [
+      "CALCULATE([Total Sales], USERELATIONSHIP(FactSales[ShipDateKey], DimDate[DateKey]))",
+      "SUM(FactSales[ShipDateKey])",
+      "CALCULATE([Total Sales], FactSales[ShipDateKey] = FactSales[OrderDateKey])",
+      "RELATED(DimDate[Date])"
+    ],
+    "answer": "A",
+    "why": "CALCULATE changes the relationship used for this one measure by activating the inactive ShipDate relationship with USERELATIONSHIP.",
+    "wrong": "Summing a key is meaningless. Equality does not activate a relationship. RELATED is not an aggregation pattern.",
+    "remember": "Keep the common default active; activate the alternate date role inside the specific measure.",
+    "source": "model",
+    "caseStudy": {
+      "title": "Case study: Northwind Traders",
+      "intro": "Northwind has FactSales with OrderDateKey, ShipDateKey, CustomerKey, ProductKey, SalesAmount, and Quantity. DimDate has one row per calendar date and a unique DateKey. DimCustomer and DimProduct each have unique keys. Sales reports normally analyze Order Date, but logistics needs Ship Date analysis. The model must remain easy to understand and responsive."
+    }
+  },
+  {
+    "id": "m32",
+    "topic": "Case study: Contoso Budgeting",
+    "type": "Choose ONE",
+    "prompt": "Using the Contoso model, Sales is daily by Product while Budget is monthly by Product Category. What is the most appropriate shared modeling approach?",
+    "options": [
+      "Relate both facts to shared Date and Product dimensions at the grains each fact supports.",
+      "Create a direct relationship from FactSales to FactBudget.",
+      "Make every relationship bidirectional.",
+      "Append daily sales and monthly budget into one table without a type column."
+    ],
+    "answer": "A",
+    "why": "A star schema lets both facts be filtered by conformed dimensions. Budget should use the Date and Product attributes that match its monthly category grain.",
+    "wrong": "Fact-to-fact relationships and blanket bidirectional filters commonly create ambiguity. Appending different business processes can confuse measures.",
+    "remember": "Multiple facts should share conformed dimensions, not filter each other directly.",
+    "source": "model",
+    "caseStudy": {
+      "title": "Case study: Contoso Budgeting",
+      "intro": "Contoso has daily FactSales, monthly FactBudget by Product Category, and shared DimDate and DimProduct tables. The report must compare Sales with Budget by month and category. Analysts have added bidirectional relationships to make slicers work, but some visuals are slow and totals are unexpected."
+    }
+  },
+  {
+    "id": "m33",
+    "topic": "Case study: Contoso Budgeting",
+    "type": "Choose TWO",
+    "prompt": "Using the Contoso model, analysts report slow visuals and unexpected totals after enabling bidirectional filters broadly. Which TWO improvements are most appropriate?",
+    "options": [
+      "Return ordinary dimension-to-fact relationships to single-direction filtering where possible.",
+      "Use Performance Analyzer to identify the actual slow visuals before changing DAX.",
+      "Keep both direction on every relationship because it is always more accurate.",
+      "Add more many-to-many relationships.",
+      "Create duplicate fact tables for every visual."
+    ],
+    "answer": "A and B",
+    "why": "Single-direction star-schema relationships are usually simpler and more predictable. Performance Analyzer provides evidence about which visuals need attention.",
+    "wrong": "Broad bidirectional and many-to-many relationships can increase ambiguity and cost. Duplicating facts adds model size.",
+    "remember": "Simplify relationship paths, then measure performance before tuning.",
+    "source": "model",
+    "caseStudy": {
+      "title": "Case study: Contoso Budgeting",
+      "intro": "Contoso has daily FactSales, monthly FactBudget by Product Category, and shared DimDate and DimProduct tables. The report must compare Sales with Budget by month and category. Analysts have added bidirectional relationships to make slicers work, but some visuals are slow and totals are unexpected."
+    }
+  },
+  {
+    "id": "m34",
+    "topic": "Basic statistical functions",
+    "type": "Choose ONE",
+    "prompt": "FactSales has multiple line rows per OrderID. A manager needs the median order value, not the median line value. [Order Amount] returns the value for one order in context. Which measure pattern is appropriate?",
+    "options": [
+      "Median Order Value = MEDIANX(VALUES(FactSales[OrderID]), [Order Amount])",
+      "Median Order Value = MEDIAN(FactSales[LineAmount])",
+      "Median Order Value = AVERAGE(FactSales[LineAmount])",
+      "Median Order Value = DISTINCTCOUNT(FactSales[OrderID])"
+    ],
+    "answer": "A",
+    "why": "VALUES creates the visible order set, and MEDIANX evaluates one order amount for each OrderID before taking the median.",
+    "wrong": "MEDIAN over LineAmount answers a different grain. AVERAGE is sensitive to large outliers. DISTINCTCOUNT returns the number of orders.",
+    "remember": "Match the iterator table to the business grain before applying a statistical aggregation.",
+    "source": "model"
+  },
+  {
+    "id": "m35",
+    "topic": "CALCULATE",
+    "type": "Choose ONE",
+    "prompt": "A visual can be filtered to one or more Channels. [Online Sales] should return Online sales only when Online is included in the user’s Channel selection; if the user excludes Online, the measure should be blank. Which pattern is correct?",
+    "options": [
+      "CALCULATE([Total Sales], KEEPFILTERS(FactSales[Channel] = \"Online\"))",
+      "CALCULATE([Total Sales], FactSales[Channel] = \"Online\")",
+      "CALCULATE([Total Sales], REMOVEFILTERS(FactSales[Channel]))",
+      "FORMAT([Total Sales], \"Online\")"
+    ],
+    "answer": "A",
+    "why": "KEEPFILTERS intersects the Online condition with the existing Channel filter instead of replacing it. Excluding Online therefore produces no matching rows.",
+    "wrong": "A normal CALCULATE Boolean filter replaces an existing filter on the same column. REMOVEFILTERS does the opposite of the requirement. FORMAT returns text.",
+    "remember": "Use KEEPFILTERS when a new condition must narrow, not replace, an existing filter on the same column.",
+    "source": "model"
+  },
+  {
+    "id": "m36",
+    "topic": "Date relationships",
+    "type": "Choose ONE",
+    "prompt": "A Date dimension contains a DateTime value at midnight, while FactSales stores OrderDateTime values with times throughout the day. A relationship produces unexpected unmatched rows. What should you do?",
+    "options": [
+      "Create matching date-only values before relating the tables.",
+      "Set the relationship to bidirectional.",
+      "Change DateKey to a measure.",
+      "Hide the unmatched rows in a visual."
+    ],
+    "answer": "A",
+    "why": "Relationship values must match. Removing the time portion or using a proper date key creates compatible values for the common date relationship.",
+    "wrong": "Direction does not make different datetime values equal. Measures and hiding rows do not repair the key.",
+    "remember": "Relationship columns must use matching values and compatible granularity.",
+    "source": "model"
+  }
+];
