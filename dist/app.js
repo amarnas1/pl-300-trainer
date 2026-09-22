@@ -1,5 +1,4 @@
 (() => {
-  const all = window.QUESTION_BANK || [];
   const quiz = document.querySelector('#quiz');
   const summary = document.querySelector('#summary');
   const submitArea = document.querySelector('#submitArea');
@@ -8,9 +7,26 @@
   const answered = document.querySelector('#answered');
   const submit = document.querySelector('#submit');
   const startButton = document.querySelector('#start');
-  const shuffleButton = document.querySelector('#shuffle');
   const resetButton = document.querySelector('#reset');
+  const changeTrackButton = document.querySelector('#changeTrack');
   const setSize = 15;
+  const tracks = {
+    prepare: {
+      title: 'Prepare the data',
+      description: 'Practise connecting, profiling, cleaning, transforming, and loading data for Power BI.',
+      tip: 'Merge adds related columns. Append stacks rows. Unpivot turns repeated columns into rows.',
+      scope: 'Study scope: connecting to data, storage modes, Power Query profiling, cleaning, transformations, merge/append, keys, query loading, and fact/dimension preparation.',
+      questions: () => window.QUESTION_BANK || []
+    },
+    visualize: {
+      title: 'Visualize and analyze the data',
+      description: 'Practise report design, storytelling, accessibility, navigation, and insight discovery.',
+      tip: 'Trend over time → line chart. Rich hover detail → report page tooltip. One visual only → visual-level filter.',
+      scope: 'Study scope: selecting and formatting visuals, filtering, themes, navigation, accessibility, mobile layouts, report storytelling, AI visuals, and trend analysis.',
+      questions: () => window.VISUALIZE_QUESTION_BANK || []
+    }
+  };
+  let activeTrack = 'prepare';
   let set = [];
   let graded = false;
 
@@ -23,6 +39,22 @@
     return copy;
   };
   const escape = value => String(value).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  const current = () => tracks[activeTrack];
+  const questionBank = () => current().questions();
+
+  const updateTrackCopy = () => {
+    const track = current();
+    document.querySelector('#syllabusTitle').textContent = track.title;
+    document.querySelector('#syllabusDescription').textContent = track.description;
+    document.querySelector('#practicePill').textContent = `${setSize} random questions · 25 minutes`;
+    document.querySelector('#introCopy').textContent = `Each attempt selects ${setSize} original, exam-style questions at random from the ${track.title} library.`;
+    document.querySelector('#quickTipText').textContent = track.tip;
+    document.querySelector('#footerScope').innerHTML = `${escape(track.scope)} Review the official <a href="https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/pl-300">PL-300 study guide</a> before booking an exam.`;
+    document.querySelector('#prepareCount').textContent = `${tracks.prepare.questions().length} original practice questions`;
+    document.querySelector('#visualizeCount').textContent = `${tracks.visualize.questions().length} original practice questions`;
+    document.querySelectorAll('[data-track]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.track === activeTrack)));
+  };
+
   const choiceMarkup = (question, index) => {
     const count = question.type === 'Choose TWO' ? 2 : 1;
     return `<div class="choices">${question.options.map((option, optionIndex) => `<label class="choice"><input type="${count === 1 ? 'radio' : 'checkbox'}" name="q${index}" value="${optionIndex}"><span><strong>${String.fromCharCode(65 + optionIndex)}.</strong> ${escape(option)}</span></label>`).join('')}</div>`;
@@ -30,9 +62,7 @@
   const select = (name, choices) => `<select name="${name}" aria-label="${name}"><option value="">Choose…</option>${choices.map(value => `<option value="${escape(value)}">${escape(value)}</option>`).join('')}</select>`;
   const caseMarkup = question => question.caseStudy ? `<aside class="case-context"><p class="case-label">${escape(question.caseStudy.title)}</p><p>${escape(question.caseStudy.intro)}</p></aside>` : '';
   const structuredMarkup = (question, index) => {
-    if (question.type === 'Order ALL four steps') {
-      return `<div class="sequence">${[1, 2, 3, 4].map(n => `<label>Position ${n}${select(`q${index}-${n}`, question.options)}</label>`).join('')}</div>`;
-    }
+    if (question.type === 'Order ALL four steps') return `<div class="sequence">${[1, 2, 3, 4].map(n => `<label>Position ${n}${select(`q${index}-${n}`, question.options)}</label>`).join('')}</div>`;
     const pairs = question.answer.split(';').map(v => v.trim().split(' = '));
     const choices = question.type === 'Answer YES or NO for EACH statement' ? ['Yes', 'No'] : [...new Set(pairs.map(pair => pair[1]))];
     return `<div class="sequence">${pairs.map(([number]) => {
@@ -46,15 +76,17 @@
     updateProgress();
   };
   const complete = (question, index) => {
-    if (question.type.startsWith('Choose')) return document.querySelectorAll(`[name="q${index}"]:checked`).length > 0;
+    if (question.type.startsWith('Choose')) {
+      const needed = question.type === 'Choose TWO' ? 2 : 1;
+      return document.querySelectorAll(`[name="q${index}"]:checked`).length === needed;
+    }
     if (question.type === 'Order ALL four steps') return [1, 2, 3, 4].every(n => document.querySelector(`[name="q${index}-${n}"]`).value);
     return question.answer.split(';').every(pair => document.querySelector(`[name="q${index}-${pair.trim().split(' = ')[0]}"]`).value);
   };
   const updateProgress = () => {
-    const total = set.length;
     const done = set.filter(complete).length;
-    progress.style.width = `${total ? (done / total) * 100 : 0}%`;
-    answered.textContent = `${done} of ${total} answered`;
+    progress.style.width = `${set.length ? (done / set.length) * 100 : 0}%`;
+    answered.textContent = `${done} of ${set.length} answered`;
   };
   const response = (question, index) => {
     if (question.type.startsWith('Choose')) return [...document.querySelectorAll(`[name="q${index}"]:checked`)].map(node => Number(node.value)).sort().join(',');
@@ -64,11 +96,10 @@
       return `${number} = ${document.querySelector(`[name="q${index}-${number}"]`).value}`;
     }).join('; ');
   };
-  const expected = question => {
-    if (!question.type.startsWith('Choose')) return question.answer;
-    return question.answer.split(' and ').map(letter => letter.trim().charCodeAt(0) - 65).sort().join(',');
-  };
+  const expected = question => question.type.startsWith('Choose') ? question.answer.split(' and ').map(letter => letter.trim().charCodeAt(0) - 65).sort().join(',') : question.answer;
   const newSet = () => {
+    const all = questionBank();
+    if (all.length < setSize) return;
     set = shuffle(all).slice(0, setSize);
     graded = false;
     summary.style.display = 'none';
@@ -79,10 +110,21 @@
     render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+  const showChooser = () => {
+    set = [];
+    graded = false;
+    summary.style.display = 'none';
+    quiz.classList.add('hidden');
+    quiz.innerHTML = '';
+    submitArea.classList.add('hidden');
+    intro.classList.remove('hidden');
+    updateTrackCopy();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
   const grade = () => {
     if (graded) return;
     const missing = set.filter((question, index) => !complete(question, index)).length;
-    if (missing && !window.confirm(`${missing} question${missing === 1 ? ' is' : 's are'} unanswered. Submit anyway?`)) return;
+    if (missing && !window.confirm(`${missing} question${missing === 1 ? ' is' : 's are'} incomplete. Submit anyway?`)) return;
     let score = 0;
     set.forEach((question, index) => {
       const card = document.querySelector(`#q-${index}`);
@@ -91,20 +133,27 @@
       const result = card.querySelector('.result');
       result.textContent = good ? 'Correct' : `Review this answer · Correct answer: ${question.answer}`;
       result.classList.add(good ? 'good' : 'bad');
+      card.querySelectorAll('input, select').forEach(control => { control.disabled = true; });
       if (good) score++;
     });
     graded = true;
     const percent = Math.round((score / set.length) * 100);
-    summary.innerHTML = `<h2>${score} / ${set.length} correct (${percent}%)</h2><p>${percent >= 80 ? 'Strong result. Review any close calls and then take another set.' : percent >= 60 ? 'A useful baseline. Start with the explanations for your mistakes, then try another set.' : 'Use the explanations as a learning pass, practise the weak areas, then try a new set.'}</p><div class="controls"><button class="secondary" id="openMistakes">Open explanations for mistakes</button><button id="nextSet">Start another random set</button></div>`;
+    summary.innerHTML = `<h2>${score} / ${set.length} correct (${percent}%)</h2><p>${percent >= 80 ? 'Strong result. Review any close calls and then take another set.' : percent >= 60 ? 'A useful baseline. Start with the explanations for your mistakes, then try another set.' : 'Use the explanations as a learning pass, practise the weak areas, then try a new set.'}</p><div class="controls"><button class="secondary" id="openMistakes">Open explanations for mistakes</button><button id="nextSet">Start another random set</button><button class="secondary" id="summaryChangeTrack">Change syllabus area</button></div>`;
     summary.style.display = 'block';
-    document.querySelector('#openMistakes').onclick = () => document.querySelectorAll('.question.incorrect details').forEach(detail => detail.open = true);
+    document.querySelector('#openMistakes').onclick = () => document.querySelectorAll('.question.incorrect details').forEach(detail => { detail.open = true; });
     document.querySelector('#nextSet').onclick = newSet;
+    document.querySelector('#summaryChangeTrack').onclick = showChooser;
     summary.scrollIntoView({ behavior: 'smooth', block: 'start' });
     submit.textContent = 'Submitted';
   };
+
+  document.querySelectorAll('[data-track]').forEach(button => button.addEventListener('click', () => {
+    activeTrack = button.dataset.track;
+    updateTrackCopy();
+  }));
   startButton.onclick = newSet;
-  shuffleButton.onclick = newSet;
   submit.onclick = grade;
   resetButton.onclick = newSet;
-  document.querySelector('.pill').textContent = `${setSize} random questions · 25 minutes`;
+  changeTrackButton.onclick = showChooser;
+  updateTrackCopy();
 })();
