@@ -76,7 +76,7 @@
     document.querySelector('#modelCount').textContent = `${tracks.model.questions().length} original practice questions`;
     document.querySelector('#visualizeCount').textContent = `${tracks.visualize.questions().length} original practice questions`;
     document.querySelector('#manageCount').textContent = `${tracks.manage.questions().length} original practice questions`;
-    document.querySelector('#fullCount').textContent = '40 questions · 27.5% / 27.5% / 27.5% / 17.5%';
+    document.querySelector('#fullCount').textContent = '40 questions · exam-weighted mix';
     document.querySelectorAll('[data-track]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.track === activeTrack)));
   };
 
