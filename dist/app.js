@@ -9,7 +9,7 @@
   const startButton = document.querySelector('#start');
   const resetButton = document.querySelector('#reset');
   const changeTrackButton = document.querySelector('#changeTrack');
-  const setSize = 15;
+  const setSize = () => activeTrack === 'full' ? 40 : 15;
   const tracks = {
     prepare: {
       title: 'Prepare the data',
@@ -25,12 +25,26 @@
       scope: 'Study scope: table and column properties, star-schema relationships, date tables, calculated objects, DAX measures, time intelligence, calculation groups, and performance optimization.',
       questions: () => window.MODEL_QUESTION_BANK || []
     },
+    manage: {
+      title: 'Manage and secure Power BI',
+      description: 'Practise workspace governance, sharing, refresh, gateways, and row-level security.',
+      tip: 'Workspace = builders. App = broad consumers. Gateway = reach on-premises data. RLS = restrict rows.',
+      scope: 'Study scope: workspaces, apps, dashboards, distribution, subscriptions, alerts, endorsement, gateways, scheduled refresh, permissions, row-level security, and sensitivity labels.',
+      questions: () => window.MANAGE_QUESTION_BANK || []
+    },
     visualize: {
       title: 'Visualize and analyze the data',
       description: 'Practise report design, storytelling, accessibility, navigation, and insight discovery.',
       tip: 'Trend over time → line chart. Rich hover detail → report page tooltip. One visual only → visual-level filter.',
       scope: 'Study scope: selecting and formatting visuals, filtering, themes, navigation, accessibility, mobile layouts, report storytelling, AI visuals, and trend analysis.',
       questions: () => window.VISUALIZE_QUESTION_BANK || []
+    },
+    full: {
+      title: 'Full practice test',
+      description: 'A weighted 40-question PL-300 practice test across all four skills areas.',
+      tip: '40 questions: 11 Prepare, 11 Model, 11 Visualize, and 7 Manage & secure.',
+      scope: 'Weighted study scope: Prepare 27.5%, Model 27.5%, Visualize 27.5%, and Manage & secure 17.5%.',
+      questions: () => []
     }
   };
   let activeTrack = 'prepare';
@@ -53,13 +67,16 @@
     const track = current();
     document.querySelector('#syllabusTitle').textContent = track.title;
     document.querySelector('#syllabusDescription').textContent = track.description;
-    document.querySelector('#practicePill').textContent = `${setSize} random questions · 25 minutes`;
-    document.querySelector('#introCopy').textContent = `Each attempt selects ${setSize} original, exam-style questions at random from the ${track.title} library.`;
+    document.querySelector('#practicePill').textContent = activeTrack === 'full' ? '40 weighted questions · 65 minutes' : `${setSize()} random questions · 25 minutes`;
+    document.querySelector('#introCopy').textContent = activeTrack === 'full' ? 'This full practice test selects 40 original, exam-style questions using PL-300 weightings: 11 Prepare, 11 Model, 11 Visualize, and 7 Manage & secure.' : `Each attempt selects ${setSize()} original, exam-style questions at random from the ${track.title} library.`;
+    startButton.textContent = activeTrack === 'full' ? 'Start 40-question full test' : 'Start 15-question test';
     document.querySelector('#quickTipText').textContent = track.tip;
     document.querySelector('#footerScope').innerHTML = `${escape(track.scope)} Review the official <a href="https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/pl-300">PL-300 study guide</a> before booking an exam.`;
     document.querySelector('#prepareCount').textContent = `${tracks.prepare.questions().length} original practice questions`;
     document.querySelector('#modelCount').textContent = `${tracks.model.questions().length} original practice questions`;
     document.querySelector('#visualizeCount').textContent = `${tracks.visualize.questions().length} original practice questions`;
+    document.querySelector('#manageCount').textContent = `${tracks.manage.questions().length} original practice questions`;
+    document.querySelector('#fullCount').textContent = '40 questions · 27.5% / 27.5% / 27.5% / 17.5%';
     document.querySelectorAll('[data-track]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.track === activeTrack)));
   };
 
@@ -105,10 +122,16 @@
     }).join('; ');
   };
   const expected = question => question.type.startsWith('Choose') ? question.answer.split(' and ').map(letter => letter.trim().charCodeAt(0) - 65).sort().join(',') : question.answer;
+  const fullSet = () => shuffle([
+    ...shuffle(tracks.prepare.questions()).slice(0, 11),
+    ...shuffle(tracks.model.questions()).slice(0, 11),
+    ...shuffle(tracks.visualize.questions()).slice(0, 11),
+    ...shuffle(tracks.manage.questions()).slice(0, 7)
+  ]);
   const newSet = () => {
     const all = questionBank();
-    if (all.length < setSize) return;
-    set = shuffle(all).slice(0, setSize);
+    if (activeTrack !== 'full' && all.length < setSize()) return;
+    set = activeTrack === 'full' ? fullSet() : shuffle(all).slice(0, setSize());
     graded = false;
     summary.style.display = 'none';
     quiz.classList.remove('hidden');
