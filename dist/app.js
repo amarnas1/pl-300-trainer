@@ -7,6 +7,7 @@
   const answered = document.querySelector('#answered');
   const submit = document.querySelector('#submit');
   const startButton = document.querySelector('#start');
+  const startAllButton = document.querySelector('#startAll');
   const resetButton = document.querySelector('#reset');
   const changeTrackButton = document.querySelector('#changeTrack');
   const setSize = () => activeTrack === 'full' ? 40 : 15;
@@ -50,6 +51,7 @@
   let activeTrack = 'prepare';
   let set = [];
   let graded = false;
+  let practiceMode = 'random';
 
   const shuffle = values => {
     const copy = [...values];
@@ -70,6 +72,8 @@
     document.querySelector('#practicePill').textContent = activeTrack === 'full' ? '40 weighted questions · 65 minutes' : `${setSize()} random questions · 25 minutes`;
     document.querySelector('#introCopy').textContent = activeTrack === 'full' ? 'This full practice test selects 40 original, exam-style questions using PL-300 weightings: 11 Prepare, 11 Model, 11 Visualize, and 7 Manage & secure.' : `Each attempt selects ${setSize()} original, exam-style questions at random from the ${track.title} library.`;
     startButton.textContent = activeTrack === 'full' ? 'Start 40-question full test' : 'Start 15-question test';
+    startAllButton.textContent = activeTrack === 'full' ? '' : `Practice all ${questionBank().length} questions`;
+    startAllButton.classList.toggle('hidden', activeTrack === 'full');
     document.querySelector('#quickTipText').textContent = track.tip;
     document.querySelector('#footerScope').innerHTML = `${escape(track.scope)} Review the official <a href="https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/pl-300">PL-300 study guide</a> before booking an exam.`;
     document.querySelector('#prepareCount').textContent = `${tracks.prepare.questions().length} original practice questions`;
@@ -128,16 +132,19 @@
     ...shuffle(tracks.visualize.questions()).slice(0, 11),
     ...shuffle(tracks.manage.questions()).slice(0, 7)
   ]);
-  const newSet = () => {
+  const newSet = (mode = 'random') => {
     const all = questionBank();
     if (activeTrack !== 'full' && all.length < setSize()) return;
-    set = activeTrack === 'full' ? fullSet() : shuffle(all).slice(0, setSize());
+    practiceMode = activeTrack === 'full' ? 'weighted' : mode;
+    set = activeTrack === 'full' ? fullSet() : practiceMode === 'all' ? shuffle(all) : shuffle(all).slice(0, setSize());
     graded = false;
     summary.style.display = 'none';
     quiz.classList.remove('hidden');
     submitArea.classList.remove('hidden');
     intro.classList.add('hidden');
     submit.textContent = 'Submit answers';
+    resetButton.textContent = practiceMode === 'all' ? 'Restart full bank' : practiceMode === 'weighted' ? 'Another weighted test' : 'Another random set';
+    document.querySelector('#practicePill').textContent = practiceMode === 'all' ? `${set.length} questions · full bank` : practiceMode === 'weighted' ? '40 weighted questions · 65 minutes' : `${set.length} random questions · 25 minutes`;
     render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -169,10 +176,11 @@
     });
     graded = true;
     const percent = Math.round((score / set.length) * 100);
-    summary.innerHTML = `<h2>${score} / ${set.length} correct (${percent}%)</h2><p>${percent >= 80 ? 'Strong result. Review any close calls and then take another set.' : percent >= 60 ? 'A useful baseline. Start with the explanations for your mistakes, then try another set.' : 'Use the explanations as a learning pass, practise the weak areas, then try a new set.'}</p><div class="controls"><button class="secondary" id="openMistakes">Open explanations for mistakes</button><button id="nextSet">Start another random set</button><button class="secondary" id="summaryChangeTrack">Change syllabus area</button></div>`;
+    const nextLabel = practiceMode === 'all' ? 'Restart full bank' : practiceMode === 'weighted' ? 'Start another weighted test' : 'Start another random set';
+    summary.innerHTML = `<h2>${score} / ${set.length} correct (${percent}%)</h2><p>${percent >= 80 ? 'Strong result. Review any close calls and then take another set.' : percent >= 60 ? 'A useful baseline. Start with the explanations for your mistakes, then try another set.' : 'Use the explanations as a learning pass, practise the weak areas, then try a new set.'}</p><div class="controls"><button class="secondary" id="openMistakes">Open explanations for mistakes</button><button id="nextSet">${nextLabel}</button><button class="secondary" id="summaryChangeTrack">Change syllabus area</button></div>`;
     summary.style.display = 'block';
     document.querySelector('#openMistakes').onclick = () => document.querySelectorAll('.question.incorrect details').forEach(detail => { detail.open = true; });
-    document.querySelector('#nextSet').onclick = newSet;
+    document.querySelector('#nextSet').onclick = () => newSet(practiceMode);
     document.querySelector('#summaryChangeTrack').onclick = showChooser;
     summary.scrollIntoView({ behavior: 'smooth', block: 'start' });
     submit.textContent = 'Submitted';
@@ -182,9 +190,10 @@
     activeTrack = button.dataset.track;
     updateTrackCopy();
   }));
-  startButton.onclick = newSet;
+  startButton.onclick = () => newSet('random');
+  startAllButton.onclick = () => newSet('all');
   submit.onclick = grade;
-  resetButton.onclick = newSet;
+  resetButton.onclick = () => newSet(practiceMode);
   changeTrackButton.onclick = showChooser;
   updateTrackCopy();
 })();
