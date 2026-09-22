@@ -18,6 +18,13 @@
       scope: 'Study scope: connecting to data, storage modes, Power Query profiling, cleaning, transformations, merge/append, keys, query loading, and fact/dimension preparation.',
       questions: () => window.QUESTION_BANK || []
     },
+    model: {
+      title: 'Model the data',
+      description: 'Practise relationships, date roles, DAX calculations, and semantic model performance.',
+      tip: 'Dimension → fact is the normal filter path. Dynamic aggregation → measure. Alternate date role → USERELATIONSHIP.',
+      scope: 'Study scope: table and column properties, star-schema relationships, date tables, calculated objects, DAX measures, time intelligence, calculation groups, and performance optimization.',
+      questions: () => window.MODEL_QUESTION_BANK || []
+    },
     visualize: {
       title: 'Visualize and analyze the data',
       description: 'Practise report design, storytelling, accessibility, navigation, and insight discovery.',
@@ -51,6 +58,7 @@
     document.querySelector('#quickTipText').textContent = track.tip;
     document.querySelector('#footerScope').innerHTML = `${escape(track.scope)} Review the official <a href="https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/pl-300">PL-300 study guide</a> before booking an exam.`;
     document.querySelector('#prepareCount').textContent = `${tracks.prepare.questions().length} original practice questions`;
+    document.querySelector('#modelCount').textContent = `${tracks.model.questions().length} original practice questions`;
     document.querySelector('#visualizeCount').textContent = `${tracks.visualize.questions().length} original practice questions`;
     document.querySelectorAll('[data-track]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.track === activeTrack)));
   };
