@@ -100,7 +100,7 @@
     }).join('')}</div>`;
   };
   const render = () => {
-    quiz.innerHTML = set.map((question, index) => `<article class="question" id="q-${index}"><p class="q-meta">Question ${String(index + 1).padStart(2, '0')} · ${escape(question.topic)} · ${escape(question.type)}</p>${caseMarkup(question)}<p class="prompt">${escape(question.prompt)}</p>${question.type.startsWith('Choose') ? choiceMarkup(question, index) : structuredMarkup(question, index)}<div class="feedback"><p class="result"></p><details><summary>Read the explanation</summary><p class="why"><strong>The basic idea:</strong> ${escape(question.why)}</p><p class="why"><strong>Why the alternatives fail:</strong> ${escape(question.wrong)}</p><p class="why"><strong>Remember:</strong> ${escape(question.remember)}</p></details></div></article>`).join('');
+    quiz.innerHTML = set.map((question, index) => `<article class="question" id="q-${index}"><p class="q-meta">Question ${String(index + 1).padStart(2, '0')} · ${escape(question.type)}</p>${caseMarkup(question)}<p class="prompt">${escape(question.prompt)}</p>${question.type.startsWith('Choose') ? choiceMarkup(question, index) : structuredMarkup(question, index)}<div class="feedback"><p class="result"></p><details><summary>Read the explanation</summary><p class="why"><strong>The basic idea:</strong> ${escape(question.why)}</p><p class="why"><strong>Why the alternatives fail:</strong> ${escape(question.wrong)}</p><p class="why"><strong>Remember:</strong> ${escape(question.remember)}</p></details></div></article>`).join('');
     quiz.querySelectorAll('input, select').forEach(control => control.addEventListener('change', updateProgress));
     updateProgress();
   };
