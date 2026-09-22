@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A visual PL-300 revision cheatsheet covering DAX, Power Query, modeling, visualizations, security, service, and performance.">
+  <title>PL-300 Cheatsheet | Prep Lab</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23146d83'/%3E%3Cpath d='M15 45V31h9v14zm13 0V19h9v26zm13 0V26h9v19z' fill='white'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="cheatsheet.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to cheatsheet</a>
+  <header class="topbar">
+    <a class="brand" href="index.html" aria-label="PL-300 Prep Lab home">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 40 40" role="img"><rect x="4" y="19" width="7" height="15" rx="2"/><rect x="16" y="9" width="7" height="25" rx="2"/><rect x="28" y="14" width="7" height="20" rx="2"/></svg>
+      </span>
+      <span>PL-300 Prep Lab</span>
+    </a>
+    <nav class="topnav" aria-label="Primary navigation">
+      <a href="index.html">Practice tests</a>
+      <a class="active" href="cheatsheet.html" aria-current="page">Cheatsheet</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">⚡ Exam-day revision map</p>
+        <h1>PL-300 Cheatsheet</h1>
+        <p class="hero-lede">The supplied five-page reference, reorganized into one quick-scan guide for DAX, Power Query, modeling, visuals, service, security, and performance.</p>
+        <div class="hero-stats" role="list" aria-label="Cheatsheet coverage">
+          <span role="listitem"><strong>15</strong> core topics</span>
+          <span role="listitem"><strong>4</strong> exam domains</span>
+          <span role="listitem"><strong>1</strong> revision page</span>
+        </div>
+      </div>
+      <div class="study-map">
+        <svg viewBox="0 0 620 250" role="img" aria-labelledby="mapTitle mapDesc">
+          <title id="mapTitle">PL-300 study flow</title>
+          <desc id="mapDesc">Prepare data, model it, visualize it, and securely share it.</desc>
+          <defs>
+            <linearGradient id="mapBg" x1="0" x2="1"><stop stop-color="#092f48"/><stop offset="1" stop-color="#0c6071"/></linearGradient>
+            <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7ce3df"/></marker>
+          </defs>
+          <rect width="620" height="250" rx="28" fill="url(#mapBg)"/>
+          <path d="M125 125H210M285 125H370M445 125H515" fill="none" stroke="#7ce3df" stroke-width="4" stroke-linecap="round" marker-end="url(#arrow)" opacity=".8"/>
+          <g fill="#fff" text-anchor="middle" font-family="Inter,system-ui,sans-serif">
+            <g transform="translate(80 125)"><circle r="45" fill="#127c8c"/><text y="-5" font-size="29">🧹</text><text y="24" font-size="14" font-weight="700">PREPARE</text></g>
+            <g transform="translate(250 125)"><circle r="45" fill="#5a4ab1"/><text y="-5" font-size="29">⭐</text><text y="24" font-size="14" font-weight="700">MODEL</text></g>
+            <g transform="translate(410 125)"><circle r="45" fill="#d27023"/><text y="-5" font-size="29">📊</text><text y="24" font-size="14" font-weight="700">VISUALIZE</text></g>
+            <g transform="translate(555 125)"><circle r="45" fill="#26835c"/><text y="-5" font-size="29">🔐</text><text y="24" font-size="14" font-weight="700">SECURE</text></g>
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <nav class="jumpbar" aria-label="Cheatsheet sections">
+      <span>Jump to</span>
+      <a href="#dax">DAX</a>
+      <a href="#prep">Power Query</a>
+      <a href="#model">Modeling</a>
+      <a href="#visuals">Visuals</a>
+      <a href="#service">Service & security</a>
+      <a href="#optimize">Performance</a>
+    </nav>
+
+    <section class="domain domain-dax" id="dax">
+      <div class="section-heading">
+        <div class="section-icon" aria-hidden="true">ƒx</div>
+        <div><p class="section-kicker">Model calculations</p><h2>DAX essentials</h2><p>Know what returns a value, what returns a table, and what changes filter context.</p></div>
+      </div>
+      <div class="card-grid dax-grid">
+        <article class="study-card featured-card">
+          <div class="card-title"><span>🎯</span><h3>Core functions</h3></div>
+          <dl class="term-list">
+            <div><dt>CALCULATE</dt><dd>Changes filter context - think “change the lens.”</dd></div>
+            <div><dt>FILTER</dt><dd>Returns a filtered table.</dd></div>
+            <div><dt>SUMX</dt><dd>Iterates row by row, then aggregates. 🪜</dd></div>
+            <div><dt>RELATED</dt><dd>Brings a column value through an existing relationship.</dd></div>
+            <div><dt>PATH / PATHITEM</dt><dd>Build a parent-child path and extract hierarchy levels.</dd></div>
+            <div><dt>RANKX</dt><dd>Ranks rows or items by an expression or measure.</dd></div>
+            <div><dt>DISTINCTCOUNT</dt><dd>Counts unique values.</dd></div>
+            <div><dt>COUNTROWS(FILTER(...))</dt><dd>Counts rows that meet a condition.</dd></div>
+            <div><dt>CALENDAR / CALENDARAUTO</dt><dd>Manual date range versus an automatic date range.</dd></div>
+            <div><dt>USERELATIONSHIP</dt><dd>Activates an inactive relationship inside a calculation.</dd></div>
+          </dl>
+          <p class="memory"><span>🧠 Memory</span> CALCULATE = lens · SUMX = row loop</p>
+        </article>
+
+        <div class="mini-stack">
+          <article class="study-card">
+            <div class="card-title"><span>🧹</span><h3>Filter override</h3></div>
+            <ul class="clean-list">
+              <li><code>ALL()</code><span>Remove all filters.</span></li>
+              <li><code>ALLEXCEPT()</code><span>Remove all except named columns.</span></li>
+              <li><code>VALUES()</code><span>Return the unique visible values.</span></li>
+            </ul>
+            <p class="memory"><span>🧠 Memory</span> ALL = wipe · ALLEXCEPT = keep one · VALUES = unique set</p>
+          </article>
+          <article class="study-card">
+            <div class="card-title"><span>⏳</span><h3>Time intelligence</h3></div>
+            <ul>
+              <li><strong>TOTALYTD / TOTALQTD / TOTALMTD</strong> - built-in period aggregations.</li>
+              <li><strong>SAMEPERIODLASTYEAR</strong> - prior-period comparison.</li>
+              <li><strong>Rolling 12 months</strong> - use a window such as DATESINPERIOD; LASTNONBLANK can anchor the last valid period, and DATEADD shifts time.</li>
+            </ul>
+            <p class="memory"><span>🧠 Memory</span> LASTNONBLANK = anchor · DATEADD = shift · CALCULATE = lens</p>
+          </article>
+          <article class="study-card">
+            <div class="card-title"><span>🔢</span><h3>Counting patterns</h3></div>
+            <ul class="clean-list">
+              <li><code>COUNT()</code><span>Non-blank values in one column.</span></li>
+              <li><code>COUNTROWS()</code><span>Rows in a table; combine with FILTER for conditions.</span></li>
+              <li><code>DISTINCTCOUNT()</code><span>Unique IDs or values.</span></li>
+              <li><code>CALCULATE + condition</code><span>Conditional SUM or AVERAGE.</span></li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="domain domain-prep" id="prep">
+      <div class="section-heading">
+        <div class="section-icon" aria-hidden="true">⚡</div>
+        <div><p class="section-kicker">Prepare the data</p><h2>Power Query & data preparation</h2><p>Reduce early, preserve meaning, and keep transformations refresh-friendly.</p></div>
+      </div>
+
+      <article class="study-card wide-card">
+        <div class="card-title"><span>📜</span><h3>Where filtering helps</h3></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Filter level</th><th>Effect</th><th>Best remembered as</th></tr></thead>
+            <tbody>
+              <tr><th>Source (SQL WHERE)</th><td>Reduces rows before import.</td><td><span class="status best">Best for large data</span></td></tr>
+              <tr><th>Power Query</th><td>Reduces rows before model load.</td><td><span class="status good">Keeps the model small</span></td></tr>
+              <tr><th>Model</th><td>The full data has already loaded.</td><td><span class="status neutral">No size gain</span></td></tr>
+              <tr><th>Report / page / visual</th><td>Changes only what is displayed.</td><td><span class="status neutral">Cosmetic filtering</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="memory"><span>🧠 Memory</span> Shrink the model at Source or Power Query · Report filters change the view only</p>
+      </article>
+
+      <div class="card-grid three-up">
+        <article class="study-card">
+          <div class="card-title"><span>🗂️</span><h3>Transform & clean</h3></div>
+          <ul class="check-list">
+            <li><strong>Append</strong> stacks rows; <strong>Merge</strong> joins tables.</li>
+            <li><strong>Group Queries</strong> organizes query steps and folders.</li>
+            <li>Filter at the source or in Power Query.</li>
+            <li><strong>Conditional Column</strong> provides IF/ELSE logic.</li>
+            <li><strong>Replace Errors</strong> fixes error values without dropping valid rows.</li>
+            <li><strong>Replace Values</strong> standardizes inconsistent labels.</li>
+            <li><strong>Column Profile</strong> helps detect anomalies and outliers.</li>
+            <li><strong>SharePoint Online</strong>: use SharePoint Folder, then filter the path.</li>
+          </ul>
+        </article>
+        <article class="study-card">
+          <div class="card-title"><span>🔍</span><h3>Preview & connectors</h3></div>
+          <div class="concept-row"><b>Column Quality</b><span>Health check</span></div>
+          <div class="concept-row"><b>Column Profile</b><span>Deep scan</span></div>
+          <div class="concept-row"><b>Column Distribution</b><span>Frequency chart</span></div>
+          <hr>
+          <p><strong>📌 Select Related Tables</strong> selects only PK/FK-linked tables.</p>
+          <p><strong>📦 Dataflows & CDM</strong> use Power Query in the cloud and can store data in CDM folders with CSV data and JSON metadata.</p>
+          <p><strong>🌐 Connectors</strong>: Web can scrape HTML; JSON connects to structured JSON data.</p>
+          <p class="memory"><span>🧠 Memory</span> CDM = warehouse · JSON = blueprint</p>
+        </article>
+        <article class="study-card folding-card">
+          <div class="card-title"><span>⚡</span><h3>Query folding</h3></div>
+          <p>Power Query pushes compatible transformations back to the source, so the source system does more of the work.</p>
+          <ul class="signal-list">
+            <li class="yes"><span>✓</span><b>View Native Query</b> is available: folding is working up to that step.</li>
+            <li class="yes"><span>✓</span>Common folding sources: SQL Server, Oracle, PostgreSQL, and Azure SQL.</li>
+            <li class="no"><span>×</span>Flat files such as Excel, CSV, and JSON do not fold.</li>
+            <li class="warn"><span>!</span>Non-foldable steps, including some index or cross-source merge operations, can stop folding.</li>
+            <li class="neutral"><span>◆</span>A greyed-out native query can mean the source or a prior manual step cannot fold.</li>
+          </ul>
+          <p><strong>Incremental refresh</strong> uses RangeStart and RangeEnd filters and benefits from folding.</p>
+          <p class="memory"><span>🧠 Memory</span> Folding = outsourcing · Smart sources = yes · Flat files = no</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="domain domain-model" id="model">
+      <div class="section-heading">
+        <div class="section-icon" aria-hidden="true">⭐</div>
+        <div><p class="section-kicker">Model the data</p><h2>Modeling patterns</h2><p>Favor a clear star schema, intentional relationships, and calculation-friendly dimensions.</p></div>
+      </div>
+      <div class="card-grid model-layout">
+        <article class="study-card">
+          <div class="card-title"><span>🏗️</span><h3>Structure & relationships</h3></div>
+          <ul class="check-list">
+            <li><strong>Star schema</strong> is generally simpler than snowflake: fact table in the center, dimensions around it.</li>
+            <li>Hide technical IDs from report view when users do not need them.</li>
+            <li>For a many-to-one relationship, remove blanks and duplicates from the “one” side.</li>
+            <li><strong>Role-playing date</strong>: reuse one date table with one active relationship and inactive alternatives activated by USERELATIONSHIP.</li>
+            <li><strong>PATH</strong> creates hierarchy text; <strong>PATHITEM</strong> extracts levels that can form a hierarchy.</li>
+            <li>Keep business keys such as ProductID and CustomerID; remove unused audit IDs and GUIDs.</li>
+          </ul>
+          <p class="memory"><span>🧠 Memory</span> Active = main road · Inactive = side road</p>
+        </article>
+        <article class="study-card model-patterns">
+          <div class="card-title"><span>🧩</span><h3>Calculation & model patterns</h3></div>
+          <div class="pattern"><span>Quick measure</span><p>For average profit, an iterator pattern such as AVERAGEX can be combined with KEEPFILTERS when preserving filter behavior matters.</p></div>
+          <div class="pattern"><span>RLS relationship</span><p>When security must propagate across a relationship, use Both and “Apply security filter in both directions” deliberately; avoid ambiguity.</p></div>
+          <div class="pattern"><span>Compression</span><p>Numeric keys generally compress better than text keys.</p></div>
+          <div class="pattern"><span>Month-end inventory</span><p>Use CALCULATE with LASTDATE or LASTNONBLANK for the supplied month-end pattern.</p></div>
+          <div class="pattern"><span>Distinct tables</span><p>VALUES returns unique values from one column; SUMMARIZE can return unique combinations.</p></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="domain domain-visuals" id="visuals">
+      <div class="section-heading">
+        <div class="section-icon" aria-hidden="true">📊</div>
+        <div><p class="section-kicker">Visualize and analyze</p><h2>Visual choices & interactions</h2><p>Choose the visual by the analytical question, then control how selections affect other visuals.</p></div>
+      </div>
+      <div class="visual-picker" role="list" aria-label="Visual selection guide">
+        <div role="listitem"><span>📊</span><b>Bar / column</b><small>Compare categories</small></div>
+        <div role="listitem"><span>📈</span><b>Line</b><small>Show a trend</small></div>
+        <div role="listitem"><span>🌌</span><b>Scatter</b><small>Test correlation</small></div>
+        <div role="listitem"><span>🧱</span><b>Histogram</b><small>Show distribution</small></div>
+        <div role="listitem"><span>💧</span><b>Funnel</b><small>Show drop-off</small></div>
+        <div role="listitem"><span>🌊</span><b>Waterfall</b><small>Explain contribution</small></div>
+        <div role="listitem"><span>🌲</span><b>Decomposition tree</b><small>AI-assisted drill</small></div>
+        <div role="listitem"><span>🎯</span><b>KPI / Card / Gauge</b><small>One value and goal; supports alerts</small></div>
+        <div role="listitem"><span>📑</span><b>Paginated report</b><small>Pixel-perfect printing</small></div>
+      </div>
+      <div class="card-grid visuals-grid">
+        <article class="study-card">
+          <div class="card-title"><span>🖱️</span><h3>Visual interactions</h3></div>
+          <div class="interaction"><b>Filter</b><span>Narrows the other visual to selected data.</span><em>🎯 narrow</em></div>
+          <div class="interaction"><b>Highlight</b><span>Shows the selected portion within the total.</span><em>✨ part</em></div>
+          <div class="interaction"><b>No impact</b><span>Leaves the other visual unchanged.</span><em>🚫 ignore</em></div>
+          <p><strong>Tab order</strong> supports keyboard accessibility. <strong>Bookmarks</strong> support storytelling and saved views.</p>
+        </article>
+        <article class="study-card">
+          <div class="card-title"><span>🔔</span><h3>Alerts vs subscriptions</h3></div>
+          <div class="table-wrap compact-table">
+            <table>
+              <thead><tr><th>Type</th><th>Trigger</th><th>Example</th></tr></thead>
+              <tbody>
+                <tr><th>Alert</th><td>Event-based ⏰</td><td>Notify when Sales &gt; 1,000</td></tr>
+                <tr><th>Subscription</th><td>Time-based 🗓️</td><td>Email the dashboard daily</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="memory"><span>🧠 Memory</span> Alert = wake me if it happens · Subscription = send it anyway</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="domain domain-service" id="service">
+      <div class="section-heading">
+        <div class="section-icon" aria-hidden="true">🔐</div>
+        <div><p class="section-kicker">Manage and secure</p><h2>Power BI Service, security & ALM</h2><p>Separate creation from distribution, apply security intentionally, and promote trusted content.</p></div>
+      </div>
+      <div class="card-grid service-grid">
+        <article class="study-card">
+          <div class="card-title"><span>🛡️</span><h3>Security & permissions</h3></div>
+          <ul class="check-list">
+            <li>Assign Microsoft Entra ID groups to <strong>RLS roles</strong>. A dynamic rule such as <code>[Region] = USERPRINCIPALNAME()</code> works only when the column stores the matching user identity.</li>
+            <li><strong>Sensitivity labels</strong> classify and can protect content.</li>
+            <li><strong>Build permission</strong> lets users create new reports from a semantic model.</li>
+            <li>Common workspace roles include <strong>Viewer, Contributor, Member, and Admin</strong>.</li>
+            <li><strong>Data alerts</strong> are configured in the Power BI service for supported dashboard tiles such as KPI, Card, and Gauge.</li>
+            <li>Tenant and admin settings can restrict export.</li>
+            <li>App viewing for free users depends on the workspace capacity and licensing configuration.</li>
+          </ul>
+        </article>
+        <article class="study-card pipeline-card">
+          <div class="card-title"><span>📦</span><h3>Deployment pipelines</h3></div>
+          <div class="pipeline" role="group" aria-label="Development to test to production deployment flow">
+            <div><span>🧑‍🍳</span><b>Development</b><small>Build and experiment</small></div>
+            <span class="pipeline-arrow" aria-hidden="true">→</span>
+            <div><span>🧪</span><b>Test</b><small>Compare and validate</small></div>
+            <span class="pipeline-arrow" aria-hidden="true">→</span>
+            <div><span>🍽️</span><b>Production</b><small>Serve trusted content</small></div>
+          </div>
+          <p>Each stage maps to a workspace. Compare and deploy content, then switch environment-specific connections from development to production.</p>
+          <p class="memory"><span>🧠 Memory</span> Cook → Taste → Serve</p>
+        </article>
+        <article class="study-card">
+          <div class="card-title"><span>🏅</span><h3>Endorsement</h3></div>
+          <div class="concept-row"><b>Promoted</b><span>Owner or creator marks useful content.</span></div>
+          <div class="concept-row"><b>Certified</b><span>Authorized reviewer approves trusted content.</span></div>
+          <div class="concept-row"><b>Featured</b><span>Content is surfaced prominently on Home.</span></div>
+          <p class="memory"><span>🧠 Memory</span> Certified = company stamp of trust</p>
+        </article>
+        <article class="study-card workspace-card">
+          <div class="card-title"><span>🍴</span><h3>Workspace vs app</h3></div>
+          <div class="workspace-compare">
+            <div><span>🔎</span><b>Workspace = kitchen</b><p>Creators collaborate, build, and experiment.</p></div>
+            <div><span>📖</span><b>App = menu</b><p>Consumers receive the curated, finished experience.</p></div>
+          </div>
+          <p class="memory"><span>🧠 Memory</span> Users order from the menu; builders work in the kitchen</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="domain domain-optimize" id="optimize">
+      <div class="section-heading">
+        <div class="section-icon" aria-hidden="true">🚀</div>
+        <div><p class="section-kicker">Optimize the model</p><h2>Performance tuning</h2><p>Load less, refresh less, calculate efficiently, and prove where the time is going.</p></div>
+      </div>
+      <div class="optimization-grid">
+        <article><span>📉</span><div><h3>Aggregate data</h3><p>Summarize daily data to monthly when detail is not required. Fewer rows usually means faster models.</p></div></article>
+        <article><span>🔄</span><div><h3>Incremental refresh</h3><p>Refresh only new or changed partitions using RangeStart and RangeEnd.</p></div></article>
+        <article><span>🚀</span><div><h3>DirectQuery aggregations</h3><p>Keep an imported summary table while detailed data remains in DirectQuery.</p></div></article>
+        <article><span>⏱️</span><div><h3>Performance Analyzer</h3><p>Identify slow visuals and DAX queries before optimizing.</p></div></article>
+        <article><span>💡</span><div><h3>Sample at source</h3><p>Pull a small representative subset while developing to reduce memory pressure.</p></div></article>
+        <article><span>🧰</span><div><h3>Keep the model lean</h3><p>Use Top N filters, remove unused columns, optimize DAX, separate fact and dimensions, and schedule refresh off-peak.</p></div></article>
+      </div>
+      <p class="memory final-memory"><span>🧠 Memory</span> Filter early · Import smart · DAX light · Visuals few</p>
+    </section>
+
+    <section class="final-rule" aria-label="Final memory summary">
+      <span aria-hidden="true">🎯</span>
+      <div><p>Final one-line summary</p><blockquote>“Fold early, clean smart, model star, secure via Entra ID, measure with CALCULATE, and refresh light.”</blockquote></div>
+    </section>
+
+    <p class="source-note">This page reorganizes the supplied study reference for quick revision. Product behavior, licensing, and exam objectives can change; verify current details in the <a href="https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/pl-300" target="_blank" rel="noreferrer">official PL-300 study guide</a>.</p>
+  </main>
+
+  <footer><a href="index.html">← Return to practice tests</a><span>PL-300 Prep Lab</span></footer>
+</body>
+</html>
